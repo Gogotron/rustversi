@@ -1,0 +1,8 @@
+[package]
+name = "rustversi"
+version = "0.1.0"
+edition = "2021"
+description = "Play a reversi game with human or program players."
+
+[dependencies]
+clap = { version = "4.5.30", features = ["cargo"] }
