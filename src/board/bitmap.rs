@@ -1,4 +1,5 @@
 use std::ops::{BitAnd, BitOr};
+use std::io::stdout;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bitmap {
@@ -12,6 +13,30 @@ impl Bitmap {
             panic!("Bitmap too big")
         }
         Self { size, bm: 0 }
+    }
+
+    pub fn full(size: u8) -> Self {
+        if size > 10 {
+            panic!("Bitmap too big")
+        }
+        if size % 2 != 0 {
+            panic!("Bitmap should be evenly sized");
+        }
+        Self {
+            size,
+            bm: [0, 0, 0x1b, 0, 0x7bdef, 0, 0x1fbf7efdfbf, 0, 0x7fbfdfeff7fbfdfeff, 0, 0x1ffbff7feffdffbff7feffdffbff][size as usize]
+        }
+    }
+
+    pub fn not(&self) -> Self {
+        Self {
+            size: self.size,
+            bm: !self.bm & Self::full(self.size).bm
+        }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.bm == 0
     }
 
     pub fn set(&self, x: u8, y: u8) -> Self {
@@ -39,63 +64,63 @@ impl Bitmap {
         self.bm.count_ones()
     }
 
-    fn shift_north(&self) -> Self {
+    pub fn shift_north(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm >> (self.size + 1)
         }
     }
 
-    fn shift_south(&self) -> Self {
+    pub fn shift_south(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm << (self.size + 1)
         }
     }
 
-    fn shift_east(&self) -> Self {
+    pub fn shift_east(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm << 1
         }
     }
 
-    fn shift_west(&self) -> Self {
+    pub fn shift_west(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm >> 1
         }
     }
 
-    fn shift_ne(&self) -> Self {
+    pub fn shift_ne(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm >> self.size
         }
     }
 
-    fn shift_se(&self) -> Self {
+    pub fn shift_se(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm << (self.size + 2)
         }
     }
 
-    fn shift_sw(&self) -> Self {
+    pub fn shift_sw(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm << self.size
         }
     }
 
-    fn shift_nw(&self) -> Self {
+    pub fn shift_nw(&self) -> Self {
         Self {
             size: self.size,
             bm: self.bm >> (self.size + 2)
         }
     }
 
-    fn intersection(self: &Self, other: &Self) -> Self {
+    pub fn intersection(self: &Self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         Self {
             size: self.size,
@@ -103,12 +128,23 @@ impl Bitmap {
         }
     }
 
-    fn union(self: &Self, other: &Self) -> Self {
+    pub fn union(self: &Self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         Self {
             size: self.size,
             bm: self.bm | other.bm
         }
+    }
+
+    pub fn print(&self) {
+        let handle = stdout().lock();
+        for y in 0..self.size {
+            for x in 0..self.size {
+                print!("{}", if self.get(x, y) { '*' } else { '_' });
+            }
+            print!("\n");
+        }
+        drop(handle);
     }
 }
 
@@ -167,5 +203,37 @@ mod tests {
         bitmap = bitmap.unset(2, 0);
         bitmap = bitmap.unset(2, 0);
         assert_eq!(bitmap.popcount(), 2);
+    }
+
+    #[test]
+    fn full() {
+        for s in (2..=10).filter(|&s| s % 2 == 0) {
+            let full = Bitmap::full(s);
+            for x in 0..s {
+                for y in 0..s {
+                    assert!(full.get(x, y), "{} {} {}", s, x, y);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn not() {
+        for s in (2..=10).filter(|&s| s % 2 == 0) {
+            let not_full = Bitmap::full(s).not();
+            for x in 0..s {
+                for y in 0..s {
+                    assert!(!not_full.get(x, y), "{} {} {}", s, x, y);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn is_empty() {
+        for s in (2..=10).filter(|&s| s % 2 == 0) {
+            assert!(Bitmap::new(s).is_empty());
+            assert!(Bitmap::full(s).not().is_empty());
+        }
     }
 }

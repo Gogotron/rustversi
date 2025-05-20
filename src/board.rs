@@ -99,6 +99,30 @@ impl Board {
         (self.black.popcount(), self.white.popcount())
     }
 
+    fn compute_moves(&self) -> Bitmap {
+        let (player, opponent) = match self.player {
+            Player::Black => (&self.black, &self.white),
+            Player::White => (&self.white, &self.black),
+        };
+
+        let empty = player.union(opponent).not();
+        let mut moves = Bitmap::new(self.size);
+
+        for shift in [
+            Bitmap::shift_north, Bitmap::shift_south, Bitmap::shift_east, Bitmap::shift_west,
+            Bitmap::shift_ne, Bitmap::shift_se, Bitmap::shift_sw, Bitmap::shift_nw
+        ] {
+            let mut candidates = shift(player).intersection(opponent);
+
+            while !candidates.is_empty() {
+                moves = shift(&candidates).intersection(&empty).union(&moves);
+                candidates = shift(&candidates).intersection(&opponent);
+            }
+        }
+
+        moves
+    }
+
     fn print(&self) {
         let handle = stdout().lock();
         for y in 0..self.size {
@@ -115,6 +139,7 @@ impl Board {
         let player_char: char = self.player.into();
         println!("'{}' player's turn.", player_char);
 
+        let moves = self.compute_moves();
         print!("  ");
         for x in 0..self.size {
             print!(" {}", ('A' as u8 + x) as char);
@@ -123,7 +148,11 @@ impl Board {
         for y in 0..self.size {
             print!("{:2}", y + 1);
             for x in 0..self.size {
-                print!(" {}", self.get(x, y).to_char());
+                if moves.get(x, y) {
+                    print!(" *");
+                } else {
+                    print!(" {}", self.get(x, y).to_char());
+                }
             }
             print!("\n");
         }
@@ -145,5 +174,12 @@ mod tests {
     fn score() {
         assert_eq!(Board::new(8).score(), (2, 2));
         assert_eq!(Board::new(8).set(0, 0, Square::Disc(Player::Black)).score(), (3, 2));
+    }
+
+    #[test]
+    fn compute_moves() {
+        let moves = Board::new(8).compute_moves();
+        moves.print();
+        assert!(moves.get(3, 2) && moves.get(2, 3) && moves.get(5, 4) && moves.get(4, 5));
     }
 }
