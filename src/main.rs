@@ -1,8 +1,9 @@
+mod board;
+
 use std::path::PathBuf;
 use std::fs::File;
 
 use clap::{command, arg, ArgAction, value_parser};
-
 
 fn main() -> std::io::Result<()> {
     let matches = command!(
@@ -31,7 +32,7 @@ fn main() -> std::io::Result<()> {
     let _size = matches.get_one::<u8>("size").expect("default ensures there is always a value") * 2;
     let _black_ai = matches.get_one::<u8>("BLACK").expect("default ensures there is always a value");
     let _white_ai = matches.get_one::<u8>("WHITE").expect("default ensures there is always a value");
-    let _contest = matches.get_one::<bool>("contest").expect("flag always has  value");
+    let _contest = matches.get_one::<bool>("contest").expect("flag always has value");
     let _verbose = matches.get_one::<bool>("verbose").expect("flag always has value");
 
     if let Some(file) = matches.get_one::<PathBuf>("FILE") {
