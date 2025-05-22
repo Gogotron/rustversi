@@ -3,12 +3,16 @@ use std::io::stdout;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bitmap {
-    size: u8,
+    pub size: u8,
     bm: u128
 }
 
 impl Bitmap {
     pub fn new(size: u8) -> Self {
+        Self::empty(size)
+    }
+
+    pub fn empty(size: u8) -> Self {
         if size > 10 {
             panic!("Bitmap too big")
         }
@@ -37,6 +41,10 @@ impl Bitmap {
 
     pub fn is_empty(&self) -> bool {
         self.bm == 0
+    }
+
+    pub fn not_empty(&self) -> bool {
+        self.bm != 0
     }
 
     pub fn set(&self, x: u8, y: u8) -> Self {
@@ -134,6 +142,21 @@ impl Bitmap {
             size: self.size,
             bm: self.bm | other.bm
         }
+    }
+
+    pub fn setminus(self: &Self, other: &Self) -> Self {
+        assert_eq!(self.size, other.size);
+        self.intersection(&other.not())
+    }
+
+    pub fn subset(self: &Self, other: &Self) -> bool {
+        assert_eq!(self.size, other.size);
+        self.union(other) == *self
+    }
+
+    pub fn supset(self: &Self, other: &Self) -> bool {
+        assert_eq!(self.size, other.size);
+        self.intersection(other) == *self
     }
 
     pub fn print(&self) {

@@ -9,6 +9,15 @@ enum Player {
     White
 }
 
+impl Player {
+    fn other(&self) -> Self {
+        match self {
+            Self::Black => Self::White,
+            Self::White => Self::Black,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 enum Square {
     Disc(Player),
@@ -33,18 +42,12 @@ impl Into<char> for Square {
     }
 }
 
-impl Square {
-    fn to_char(&self) -> char {
-        (*self).into()
-    }
-}
-
 #[derive(Debug, Clone)]
 struct Board {
     size: u8,
     black: Bitmap,
     white: Bitmap,
-    player: Player,
+    player: Option<Player>,
 }
 
 impl Board {
@@ -58,7 +61,7 @@ impl Board {
             white: Bitmap::new(size)
                 .set(size / 2 - 1, size / 2 - 1)
                 .set(size / 2, size / 2),
-            player: Player::Black
+            player: Some(Player::Black),
         }
     }
 
@@ -101,33 +104,72 @@ impl Board {
 
     fn compute_moves(&self) -> Bitmap {
         let (player, opponent) = match self.player {
+            Some(Player::Black) => (&self.black, &self.white),
+            Some(Player::White) => (&self.white, &self.black),
+            None => return Bitmap::new(self.size),
+        };
+        compute_moves(player, opponent)
+    }
+
+    fn play(&self, x: u8, y: u8) -> Option<Self> {
+        if self.compute_moves().get(x, y) {
+            return None;
+        }
+
+        let (player, opponent) = match self.player? {
             Player::Black => (&self.black, &self.white),
             Player::White => (&self.white, &self.black),
         };
 
-        let empty = player.union(opponent).not();
-        let mut moves = Bitmap::new(self.size);
-
+        let move_mask = Bitmap::new(self.size).set(x, y);
+        let mut flipped = Bitmap::new(self.size);
         for shift in [
             Bitmap::shift_north, Bitmap::shift_south, Bitmap::shift_east, Bitmap::shift_west,
             Bitmap::shift_ne, Bitmap::shift_se, Bitmap::shift_sw, Bitmap::shift_nw
         ] {
-            let mut candidates = shift(player).intersection(opponent);
+          let mut prev_line = Bitmap::new(self.size);
+          let mut line = shift(&move_mask);
 
-            while !candidates.is_empty() {
-                moves = shift(&candidates).intersection(&empty).union(&moves);
-                candidates = shift(&candidates).intersection(&opponent);
-            }
+          while line != prev_line && line.subset(opponent) {
+            prev_line = line;
+            line = prev_line.union(&shift(&prev_line));
+          }
+          if line.intersection(player).not_empty() {
+            flipped = flipped.union(&line);
+          }
         }
 
-        moves
+        let (player, opponent) = (
+            player.union(&move_mask).union(&flipped),
+            opponent.setminus(&flipped)
+        );
+
+        let new_player = if compute_moves(&opponent, &player).not_empty() {
+            Some(self.player?.other())
+        } else if compute_moves(&player, &opponent).not_empty() {
+            Some(self.player?)
+        } else {
+            None
+        };
+
+        let (new_black, new_white) = match self.player? {
+            Player::Black => (player, opponent),
+            Player::White => (opponent, player),
+        };
+
+        Some(Self {
+            size: self.size,
+            black: new_black,
+            white: new_white,
+            player: new_player,
+        })
     }
 
     fn print(&self) {
         let handle = stdout().lock();
         for y in 0..self.size {
             for x in 0..self.size {
-                print!("{}", self.get(x, y).to_char());
+                print!("{}", Into::<char>::into(self.get(x, y)));
             }
             print!("\n");
         }
@@ -136,8 +178,11 @@ impl Board {
 
     fn pretty_print(&self) {
         let handle = stdout().lock();
-        let player_char: char = self.player.into();
-        println!("'{}' player's turn.", player_char);
+        if let Some(player) = self.player {
+            println!("'{}' player's turn.", Into::<char>::into(player));
+        } else {
+            println!("Game ended.");
+        }
 
         let moves = self.compute_moves();
         print!("  ");
@@ -151,13 +196,34 @@ impl Board {
                 if moves.get(x, y) {
                     print!(" *");
                 } else {
-                    print!(" {}", self.get(x, y).to_char());
+                    print!(" {}", Into::<char>::into(self.get(x, y)));
                 }
             }
             print!("\n");
         }
         drop(handle);
     }
+}
+
+fn compute_moves(player: &Bitmap, opponent: &Bitmap) -> Bitmap {
+    assert_eq!(player.size, opponent.size);
+
+    let empty = player.union(opponent).not();
+    let mut moves = Bitmap::new(player.size);
+
+    for shift in [
+        Bitmap::shift_north, Bitmap::shift_south, Bitmap::shift_east, Bitmap::shift_west,
+        Bitmap::shift_ne, Bitmap::shift_se, Bitmap::shift_sw, Bitmap::shift_nw
+    ] {
+        let mut candidates = shift(player).intersection(opponent);
+
+        while !candidates.is_empty() {
+            moves = shift(&candidates).intersection(&empty).union(&moves);
+            candidates = shift(&candidates).intersection(&opponent);
+        }
+    }
+
+    moves
 }
 
 #[cfg(test)]
