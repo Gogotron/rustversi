@@ -1,8 +1,9 @@
 mod bitmap;
 use bitmap::Bitmap;
 
-use std::io::stdout;
 use std::fs::File;
+use std::io::{stdout, BufReader, Read};
+
 
 #[derive(Debug, Clone, Copy)]
 enum Player {
@@ -39,6 +40,27 @@ impl From<Square> for char {
         match val {
             Square::Disc(p) => p.into(),
             Square::Empty => '_',
+        }
+    }
+}
+
+impl From<Square> for Option<Player> {
+    fn from(val: Square) -> Self {
+        match val {
+            Square::Disc(p) => Some(p.into()),
+            Square::Empty => None,
+        }
+    }
+}
+
+impl TryFrom<char> for Square {
+    type Error = ();
+    fn try_from(val: char) -> Result<Self, Self::Error> {
+        match val {
+            'X' => Ok(Square::Disc(Player::Black)),
+            'O' => Ok(Square::Disc(Player::White)),
+            '_' => Ok(Square::Empty),
+            _ => Err(()),
         }
     }
 }
@@ -212,8 +234,39 @@ impl Board {
     }
 }
 
-impl From<File> for Board {
-    fn from(val: File) -> Self {
+pub enum ParsingError {
+    IOError(std::io::Error),
+    ParsingError,
+    EmptyFile,
+}
+
+impl From<std::io::Error> for ParsingError {
+    fn from(val: std::io::Error) -> Self {
+        Self::IOError(val)
+    }
+}
+
+impl From<()> for ParsingError {
+    fn from(_val: ()) -> Self {
+        Self::ParsingError
+    }
+}
+
+impl TryFrom<File> for Board {
+    type Error = ParsingError;
+
+    fn try_from(file: File) -> Result<Self, Self::Error> {
+        let mut bytes = BufReader::new(file).bytes();
+        let player = bytes.find(|token| {
+            match token {
+                Ok(token) => !(*token as char).is_ascii_whitespace(),
+                _ => true,
+            }
+        });
+        let player: Option<Player> = match player {
+            Some(token) => Square::try_from(token? as char)?.into(),
+            None => return Err(ParsingError::EmptyFile),
+        };
         todo!()
     }
 }

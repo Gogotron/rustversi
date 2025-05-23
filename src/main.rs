@@ -1,12 +1,13 @@
 mod board;
 use board::Board;
+use board::ParsingError;
 
 use std::path::PathBuf;
 use std::fs::File;
 
 use clap::{command, arg, ArgAction, value_parser};
 
-fn main() -> std::io::Result<()> {
+fn main() -> Result<(), ParsingError> {
     let matches = command!(
         ).arg(arg!(-v --verbose "verbose output")
             .action(ArgAction::SetTrue)
@@ -37,7 +38,7 @@ fn main() -> std::io::Result<()> {
     let _verbose = matches.get_one::<bool>("verbose").expect("flag always has value");
 
     let board = match matches.get_one::<PathBuf>("FILE") {
-        Some(file) => Board::from(File::open(file)?),
+        Some(file) => Board::try_from(File::open(file)?)?,
         _ => Board::new(size),
     };
 
