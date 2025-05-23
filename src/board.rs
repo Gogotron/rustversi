@@ -47,7 +47,7 @@ impl From<Square> for char {
 impl From<Square> for Option<Player> {
     fn from(val: Square) -> Self {
         match val {
-            Square::Disc(p) => Some(p.into()),
+            Square::Disc(p) => Some(p),
             Square::Empty => None,
         }
     }
@@ -234,9 +234,10 @@ impl Board {
     }
 }
 
+#[derive(Debug)]
 pub enum ParsingError {
     IOError(std::io::Error),
-    ParsingError,
+    Generic,
     EmptyFile,
     InvalidCharacter,
 }
@@ -249,7 +250,7 @@ impl From<std::io::Error> for ParsingError {
 
 impl From<()> for ParsingError {
     fn from(_val: ()) -> Self {
-        Self::ParsingError
+        Self::Generic
     }
 }
 
