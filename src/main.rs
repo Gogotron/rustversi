@@ -1,4 +1,5 @@
 mod board;
+use board::Board;
 
 use std::path::PathBuf;
 use std::fs::File;
@@ -29,16 +30,18 @@ fn main() -> std::io::Result<()> {
             .value_parser(value_parser!(PathBuf))
         ).get_matches();
 
-    let _size = matches.get_one::<u8>("size").expect("default ensures there is always a value") * 2;
+    let size = matches.get_one::<u8>("size").expect("default ensures there is always a value") * 2;
     let _black_ai = matches.get_one::<u8>("BLACK").expect("default ensures there is always a value");
     let _white_ai = matches.get_one::<u8>("WHITE").expect("default ensures there is always a value");
     let _contest = matches.get_one::<bool>("contest").expect("flag always has value");
     let _verbose = matches.get_one::<bool>("verbose").expect("flag always has value");
 
-    if let Some(file) = matches.get_one::<PathBuf>("FILE") {
-        println!("File {}", file.display());
-        let mut _file = File::open(file)?;
-    }
+    let board = match matches.get_one::<PathBuf>("FILE") {
+        Some(file) => Board::from(File::open(file)?),
+        _ => Board::new(size),
+    };
+
+    board.pretty_print();
 
     Ok(())
 }

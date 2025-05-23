@@ -2,6 +2,7 @@ mod bitmap;
 use bitmap::Bitmap;
 
 use std::io::stdout;
+use std::fs::File;
 
 #[derive(Debug, Clone, Copy)]
 enum Player {
@@ -43,7 +44,7 @@ impl From<Square> for char {
 }
 
 #[derive(Debug, Clone)]
-struct Board {
+pub struct Board {
     size: u8,
     black: Bitmap,
     white: Bitmap,
@@ -51,7 +52,7 @@ struct Board {
 }
 
 impl Board {
-    fn new(size: u8) -> Self {
+    pub fn new(size: u8) -> Self {
         assert!(size % 2 == 0 && (2..=10).contains(&size));
         Self {
             size,
@@ -169,20 +170,21 @@ impl Board {
         let handle = stdout().lock();
         for y in 0..self.size {
             for x in 0..self.size {
-                print!("{}", Into::<char>::into(self.get(x, y)));
+                print!("{}", char::from(self.get(x, y)));
             }
             println!();
         }
         drop(handle);
     }
 
-    fn pretty_print(&self) {
+    pub fn pretty_print(&self) {
         let handle = stdout().lock();
         if let Some(player) = self.player {
-            println!("'{}' player's turn.", Into::<char>::into(player));
+            println!("'{}' player's turn.", char::from(player));
         } else {
             println!("Game ended.");
         }
+        println!();
 
         let moves = self.compute_moves();
         print!("  ");
@@ -196,12 +198,23 @@ impl Board {
                 if moves.get(x, y) {
                     print!(" *");
                 } else {
-                    print!(" {}", Into::<char>::into(self.get(x, y)));
+                    print!(" {}", char::from(self.get(x, y)));
                 }
             }
             println!();
         }
+
+        let (black, white) = self.score();
+        println!("Score: '{}' = {}, '{}' = {}",
+                 char::from(Player::Black), black,
+                 char::from(Player::White), white);
         drop(handle);
+    }
+}
+
+impl From<File> for Board {
+    fn from(val: File) -> Self {
+        todo!()
     }
 }
 
