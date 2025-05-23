@@ -51,7 +51,7 @@ impl Bitmap {
         assert!(x < self.size && y < self.size);
         Self {
             size: self.size,
-            bm: self.bm | ((1 as u128) << (x + y * (self.size + 1)))
+            bm: self.bm | (1_u128 << (x + y * (self.size + 1)))
         }
     }
 
@@ -59,7 +59,7 @@ impl Bitmap {
         assert!(x < self.size && y < self.size);
         Self {
             size: self.size,
-            bm: self.bm & !((1 as u128) << (x + y * (self.size + 1)))
+            bm: self.bm & !(1_u128 << (x + y * (self.size + 1)))
         }
     }
 
@@ -128,7 +128,7 @@ impl Bitmap {
         }
     }
 
-    pub fn intersection(self: &Self, other: &Self) -> Self {
+    pub fn intersection(&self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         Self {
             size: self.size,
@@ -136,7 +136,7 @@ impl Bitmap {
         }
     }
 
-    pub fn union(self: &Self, other: &Self) -> Self {
+    pub fn union(&self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         Self {
             size: self.size,
@@ -144,17 +144,17 @@ impl Bitmap {
         }
     }
 
-    pub fn setminus(self: &Self, other: &Self) -> Self {
+    pub fn setminus(&self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         self.intersection(&other.not())
     }
 
-    pub fn subset(self: &Self, other: &Self) -> bool {
+    pub fn subset(&self, other: &Self) -> bool {
         assert_eq!(self.size, other.size);
         self.union(other) == *self
     }
 
-    pub fn supset(self: &Self, other: &Self) -> bool {
+    pub fn supset(&self, other: &Self) -> bool {
         assert_eq!(self.size, other.size);
         self.intersection(other) == *self
     }
@@ -165,7 +165,7 @@ impl Bitmap {
             for x in 0..self.size {
                 print!("{}", if self.get(x, y) { '*' } else { '_' });
             }
-            print!("\n");
+            println!();
         }
         drop(handle);
     }

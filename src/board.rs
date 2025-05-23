@@ -24,18 +24,18 @@ enum Square {
     Empty,
 }
 
-impl Into<char> for Player {
-    fn into(self) -> char {
-        match self {
+impl From<Player> for char {
+    fn from(val: Player) -> Self {
+        match val {
             Player::Black => 'X',
             Player::White => 'O',
         }
     }
 }
 
-impl Into<char> for Square {
-    fn into(self) -> char {
-        match self {
+impl From<Square> for char {
+    fn from(val: Square) -> Self {
+        match val {
             Square::Disc(p) => p.into(),
             Square::Empty => '_',
         }
@@ -52,7 +52,7 @@ struct Board {
 
 impl Board {
     fn new(size: u8) -> Self {
-        assert!(size % 2 == 0 && size >= 2 && size <= 10);
+        assert!(size % 2 == 0 && (2..=10).contains(&size));
         Self {
             size,
             black: Bitmap::new(size)
@@ -171,7 +171,7 @@ impl Board {
             for x in 0..self.size {
                 print!("{}", Into::<char>::into(self.get(x, y)));
             }
-            print!("\n");
+            println!();
         }
         drop(handle);
     }
@@ -187,9 +187,9 @@ impl Board {
         let moves = self.compute_moves();
         print!("  ");
         for x in 0..self.size {
-            print!(" {}", ('A' as u8 + x) as char);
+            print!(" {}", (b'A' + x) as char);
         }
-        print!("\n");
+        println!();
         for y in 0..self.size {
             print!("{:2}", y + 1);
             for x in 0..self.size {
@@ -199,7 +199,7 @@ impl Board {
                     print!(" {}", Into::<char>::into(self.get(x, y)));
                 }
             }
-            print!("\n");
+            println!();
         }
         drop(handle);
     }
@@ -219,7 +219,7 @@ fn compute_moves(player: &Bitmap, opponent: &Bitmap) -> Bitmap {
 
         while !candidates.is_empty() {
             moves = shift(&candidates).intersection(&empty).union(&moves);
-            candidates = shift(&candidates).intersection(&opponent);
+            candidates = shift(&candidates).intersection(opponent);
         }
     }
 
