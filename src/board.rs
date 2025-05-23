@@ -238,6 +238,7 @@ pub enum ParsingError {
     IOError(std::io::Error),
     ParsingError,
     EmptyFile,
+    InvalidCharacter,
 }
 
 impl From<std::io::Error> for ParsingError {
@@ -257,16 +258,32 @@ impl TryFrom<File> for Board {
 
     fn try_from(file: File) -> Result<Self, Self::Error> {
         let mut bytes = BufReader::new(file).bytes();
-        let player = bytes.find(|token| {
+        let first = bytes.find(|token| {
             match token {
                 Ok(token) => !(*token as char).is_ascii_whitespace(),
                 _ => true,
             }
         });
-        let player: Option<Player> = match player {
+        let _player: Option<Player> = match first {
             Some(token) => Square::try_from(token? as char)?.into(),
-            None => return Err(ParsingError::EmptyFile),
+            None => return Err(Self::Error::EmptyFile),
         };
+
+        let mut chars = bytes.filter_map(|byte| byte.ok()).filter_map(|byte| {
+            if !byte.is_ascii_whitespace() || byte == b'\n' {
+                Some(byte as char)
+            } else { None }
+        });
+
+        let mut first_row: Vec<Square> = vec!();
+        while let Some(c) = chars.next() {
+            match c {
+                '\n' => (),
+                'X' | 'O' | '_' => first_row.push(c.try_into().expect("Should be valid character")),
+                '#' => todo!(), // chars = chars.skip_while(|c| { *c != '\n' }),
+                _ => return Err(Self::Error::InvalidCharacter),
+            }
+        }
         todo!()
     }
 }
