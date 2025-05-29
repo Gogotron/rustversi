@@ -83,20 +83,27 @@ pub struct Board {
     size: u8,
     black: Bitmap,
     white: Bitmap,
+    moves: Bitmap,
     pub player: Option<Player>,
 }
 
 impl Board {
     pub fn new(size: u8) -> Self {
         assert!(size % 2 == 0 && (4..=10).contains(&size));
+
+        let black = Bitmap::new(size)
+            .set(size / 2, size / 2 - 1)
+            .set(size / 2 - 1, size / 2);
+        let white = Bitmap::new(size)
+            .set(size / 2 - 1, size / 2 - 1)
+            .set(size / 2, size / 2);
+        let moves = compute_moves(&black, &white);
+
         Self {
             size,
-            black: Bitmap::new(size)
-                .set(size / 2, size / 2 - 1)
-                .set(size / 2 - 1, size / 2),
-            white: Bitmap::new(size)
-                .set(size / 2 - 1, size / 2 - 1)
-                .set(size / 2, size / 2),
+            black,
+            white,
+            moves,
             player: Some(Player::Black),
         }
     }
@@ -126,10 +133,18 @@ impl Board {
                 self.white.unset(x, y)
             ),
         };
+
+        let moves = match self.player {
+            Some(Player::Black) => compute_moves(&black, &white),
+            Some(Player::White) => compute_moves(&white, &black),
+            None => Bitmap::empty(self.size),
+        };
+
         Self {
             size: self.size,
             black,
             white,
+            moves,
             player: self.player
         }
     }
@@ -142,9 +157,13 @@ impl Board {
         let (player, opponent) = match self.player {
             Some(Player::Black) => (&self.black, &self.white),
             Some(Player::White) => (&self.white, &self.black),
-            None => return Bitmap::new(self.size),
+            None => return Bitmap::empty(self.size),
         };
         compute_moves(player, opponent)
+    }
+
+    fn moves(&self) -> Vec<Move> {
+        self.moves.clone().map(|(x, y)| Move { x, y }).collect()
     }
 
     pub fn play(&self, m: Move) -> Option<Self> {
@@ -181,12 +200,17 @@ impl Board {
             opponent.setminus(&flipped)
         );
 
-        let new_player = if compute_moves(&opponent, &player).not_empty() {
+        let mut moves = compute_moves(&opponent, &player);
+        let new_player = if moves.not_empty() {
             Some(self.player?.other())
-        } else if compute_moves(&player, &opponent).not_empty() {
-            Some(self.player?)
         } else {
-            None
+            moves = compute_moves(&player, &opponent);
+            if compute_moves(&player, &opponent).not_empty() {
+                Some(self.player?)
+            } else {
+                moves = Bitmap::empty(self.size);
+                None
+            }
         };
 
         let (new_black, new_white) = match self.player? {
@@ -198,6 +222,7 @@ impl Board {
             size: self.size,
             black: new_black,
             white: new_white,
+            moves,
             player: new_player,
         })
     }
@@ -222,7 +247,6 @@ impl Board {
         }
         println!();
 
-        let moves = self.compute_moves();
         print!("  ");
         for x in 0..self.size {
             print!(" {}", (b'A' + x) as char);
@@ -231,7 +255,7 @@ impl Board {
         for y in 0..self.size {
             print!("{:2}", y + 1);
             for x in 0..self.size {
-                if moves.get(x, y) {
+                if self.moves.get(x, y) {
                     print!(" *");
                 } else {
                     print!(" {}", char::from(self.get(x, y)));
@@ -326,11 +350,27 @@ impl TryFrom<File> for Board {
             }
         }
 
+        let size = size.try_into().expect("already checked");
+        let black = grid.iter()
+            .map(|r| r.iter().map(|s| *s == Square::Disc(Player::Black)).collect())
+            .collect::<Vec<Vec<bool>>>()
+            .into();
+        let white = grid.iter()
+            .map(|r| r.iter().map(|s| *s == Square::Disc(Player::White)).collect())
+            .collect::<Vec<Vec<bool>>>()
+            .into();
+        let moves = match player {
+            Some(Player::Black) => compute_moves(&black, &white),
+            Some(Player::White) => compute_moves(&white, &black),
+            None => Bitmap::empty(size),
+        };
+
         Ok(Self {
             player,
-            size: size.try_into().expect("already checked"),
-            black: grid.iter().map(|r| r.iter().map(|s| *s == Square::Disc(Player::Black)).collect()).collect::<Vec<Vec<bool>>>().into(),
-            white: grid.iter().map(|r| r.iter().map(|s| *s == Square::Disc(Player::White)).collect()).collect::<Vec<Vec<bool>>>().into(),
+            size,
+            black,
+            white,
+            moves,
         })
     }
 }

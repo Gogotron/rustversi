@@ -171,6 +171,26 @@ impl Bitmap {
         }
         drop(handle);
     }
+
+    fn lowest(&self) -> Option<(u8, u8)> {
+        if self.is_empty() {
+            None
+        } else {
+            let i: u8 = self.bm.trailing_zeros().try_into().expect("u8 shouldn't have more than 255 zeros");
+            Some((i % (self.size + 1), i / (self.size + 1)))
+        }
+    }
+}
+
+impl Iterator for Bitmap {
+    type Item = (u8, u8);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.lowest().map(|(x, y)| {
+            *self = self.unset(x, y);
+            (x, y)
+        })
+    }
 }
 
 impl BitAnd for Bitmap {
@@ -275,5 +295,19 @@ mod tests {
             assert!(Bitmap::new(s).is_empty());
             assert!(Bitmap::full(s).not().is_empty());
         }
+    }
+
+    #[test]
+    fn iterator() {
+        let mut bitmap = Bitmap::new(3);
+        bitmap = bitmap.set(2, 0);
+        bitmap = bitmap.set(0, 1);
+        bitmap = bitmap.set(0, 2);
+        bitmap = bitmap.set(1, 0);
+        bitmap = bitmap.set(1, 1);
+        assert_eq!(
+            bitmap.collect::<Vec<(u8, u8)>>(),
+            vec!((1, 0), (2, 0), (0, 1), (1, 1), (0, 2))
+        );
     }
 }
