@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::{stdout, BufReader, Read};
 
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Player {
     Black,
     White
@@ -20,7 +20,7 @@ impl Player {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Square {
     Disc(Player),
     Empty,
@@ -65,7 +65,7 @@ impl TryFrom<char> for Square {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Board {
     size: u8,
     black: Bitmap,
@@ -75,7 +75,7 @@ pub struct Board {
 
 impl Board {
     pub fn new(size: u8) -> Self {
-        assert!(size % 2 == 0 && (2..=10).contains(&size));
+        assert!(size % 2 == 0 && (4..=10).contains(&size));
         Self {
             size,
             black: Bitmap::new(size)
@@ -234,17 +234,19 @@ impl Board {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParsingError {
-    IOError(std::io::Error),
+    IOError,
     Generic,
     EmptyFile,
     InvalidCharacter,
+    BadSize,
+    InconsistentSize,
 }
 
 impl From<std::io::Error> for ParsingError {
-    fn from(val: std::io::Error) -> Self {
-        Self::IOError(val)
+    fn from(_val: std::io::Error) -> Self {
+        Self::IOError
     }
 }
 
@@ -254,38 +256,68 @@ impl From<()> for ParsingError {
     }
 }
 
+fn next_ignore_chars<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
+    match iter.find(|c| !c.is_ascii_whitespace() || *c =='\n') {
+        Some('#') => iter.find(|c| *c == '\n'),
+        c => c,
+    }
+}
+
 impl TryFrom<File> for Board {
     type Error = ParsingError;
 
     fn try_from(file: File) -> Result<Self, Self::Error> {
-        let mut bytes = BufReader::new(file).bytes();
-        let first = bytes.find(|token| {
-            match token {
-                Ok(token) => !(*token as char).is_ascii_whitespace(),
-                _ => true,
-            }
-        });
-        let _player: Option<Player> = match first {
-            Some(token) => Square::try_from(token? as char)?.into(),
+        let mut chars = BufReader::new(file)
+            .bytes()
+            .filter(|r| r.is_ok())
+            .map(|c| c.expect("Should be Ok.") as char);
+
+        let player: Option<Player> = match next_ignore_chars(&mut chars) {
+            Some(c) => Square::try_from(c)?.into(),
             None => return Err(Self::Error::EmptyFile),
         };
 
-        let mut chars = bytes.filter_map(|byte| byte.ok()).filter_map(|byte| {
-            if !byte.is_ascii_whitespace() || byte == b'\n' {
-                Some(byte as char)
-            } else { None }
-        });
-
         let mut first_row: Vec<Square> = vec!();
-        while let Some(c) = chars.next() {
+        while let Some(c) = next_ignore_chars(&mut chars) {
             match c {
-                '\n' => (),
+                '\n' => if first_row.is_empty() { } else { break },
                 'X' | 'O' | '_' => first_row.push(c.try_into().expect("Should be valid character")),
-                '#' => todo!(), // chars = chars.skip_while(|c| { *c != '\n' }),
                 _ => return Err(Self::Error::InvalidCharacter),
             }
         }
-        todo!()
+        let size = first_row.len();
+        if !(size % 2 == 0 && (4..=10).contains(&size)) {
+            return Err(Self::Error::BadSize)
+        }
+
+        let mut grid: Vec<Vec<Square>> = vec!();
+        grid.push(first_row);
+        let mut row: Vec<Square> = vec!();
+        while let Some(c) = next_ignore_chars(&mut chars) {
+            match c {
+                '\n' => match row.len() {
+                    l if l == size => {
+                        grid.push(row);
+                        row = vec!();
+                    }
+                    0 => (),
+                    _ => return Err(Self::Error::InconsistentSize),
+                },
+                'X' | 'O' | '_' => {
+                    if row.len() < size && grid.len() < size {
+                        row.push(c.try_into().expect("Should be valid character"))
+                    } else { return Err(Self::Error::InconsistentSize) }
+                },
+                _ => return Err(Self::Error::InvalidCharacter),
+            }
+        }
+
+        Ok(Self {
+            player,
+            size: size.try_into().expect("already checked"),
+            black: grid.iter().map(|r| r.iter().map(|s| *s == Square::Disc(Player::Black)).collect()).collect::<Vec<Vec<bool>>>().into(),
+            white: grid.iter().map(|r| r.iter().map(|s| *s == Square::Disc(Player::White)).collect()).collect::<Vec<Vec<bool>>>().into(),
+        })
     }
 }
 
@@ -313,6 +345,7 @@ fn compute_moves(player: &Bitmap, opponent: &Bitmap) -> Bitmap {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::{SeekFrom, Seek, Write};
 
     #[test]
     fn printing() {
@@ -331,5 +364,58 @@ mod tests {
         let moves = Board::new(8).compute_moves();
         moves.print();
         assert!(moves.get(3, 2) && moves.get(2, 3) && moves.get(5, 4) && moves.get(4, 5));
+    }
+
+    #[test]
+    fn ignore_chars() {
+        let mut iter = "BEFORE COMMENT #IN COMMENT\nAFTER COMMENT".chars();
+        let mut no_comment: Vec<char> = vec!();
+        while let Some(c) = super::next_ignore_chars(&mut iter) {
+            no_comment.push(c);
+        }
+        println!("{}", no_comment.into_iter().collect::<String>());
+    }
+
+    #[test]
+    fn file_conversion() {
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n____\n_OX_\n_XO_\n____\n").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Ok(Board::new(4)));
+
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n______\n______\n__OX__\n__XO__\n______\n______\n").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Ok(Board::new(6)));
+
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n________\n________\n________\n___OX___\n___XO___\n________\n________\n________\n").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Ok(Board::new(8)));
+
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n__________\n__________\n__________\n__________\n____OX____\n____XO____\n__________\n__________\n__________\n__________\n").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Ok(Board::new(10)));
+
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n_a__\n_OX_\n_XO_\n____\n").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Err(ParsingError::InvalidCharacter));
+
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n____\n_OX_\n_XO_\n____\n____").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Err(ParsingError::InconsistentSize));
+
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n____\n_OX__\n_XO_\n____").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Err(ParsingError::InconsistentSize));
+
+        let mut file: File = tempfile::tempfile().unwrap();
+        write!(file, "X\n__\nOX_\nXO\n__").unwrap();
+        file.seek(SeekFrom::Start(0)).unwrap();
+        assert_eq!(Board::try_from(file), Err(ParsingError::BadSize));
     }
 }

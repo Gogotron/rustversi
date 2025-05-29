@@ -187,6 +187,21 @@ impl BitOr for Bitmap {
     }
 }
 
+impl From<Vec<Vec<bool>>> for Bitmap {
+    fn from(val: Vec<Vec<bool>>) -> Self {
+        let mut bm = Bitmap::empty(val.len().try_into().expect("bitmaps must be at most of size 10"));
+        for (y, r) in val.into_iter().enumerate() {
+            let y = y.try_into().expect("bitmaps must be at most of size 10");
+            for (x, b) in r.into_iter().enumerate() {
+                if b {
+                    bm = bm.set(x.try_into().expect("bitmaps must be at most of size 10"), y);
+                }
+            }
+        }
+        bm
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
