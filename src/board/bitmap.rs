@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use std::ops::{BitAnd, BitOr};
 use std::io::stdout;
 

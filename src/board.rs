@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 mod bitmap;
 use bitmap::Bitmap;
 
@@ -6,7 +8,7 @@ use std::io::{stdout, BufReader, Read};
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Player {
+pub enum Player {
     Black,
     White
 }
@@ -17,6 +19,15 @@ impl Player {
             Self::Black => Self::White,
             Self::White => Self::Black,
         }
+    }
+}
+
+impl From<Player> for String {
+    fn from(p: Player) -> Self {
+        match p {
+            Player::Black => "black",
+            Player::White => "white",
+        }.into()
     }
 }
 
@@ -65,12 +76,14 @@ impl TryFrom<char> for Square {
     }
 }
 
+pub struct Move { x: u8, y: u8, }
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Board {
     size: u8,
     black: Bitmap,
     white: Bitmap,
-    player: Option<Player>,
+    pub player: Option<Player>,
 }
 
 impl Board {
@@ -134,7 +147,8 @@ impl Board {
         compute_moves(player, opponent)
     }
 
-    fn play(&self, x: u8, y: u8) -> Option<Self> {
+    pub fn play(&self, m: Move) -> Option<Self> {
+        let (x, y) = (m.x, m.y);
         if self.compute_moves().get(x, y) {
             return None;
         }
