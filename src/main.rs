@@ -32,16 +32,16 @@ impl Tactic {
         }
     }
 
-    fn human(board: &Board) -> Option<Move> {
+    fn human(_board: &Board) -> Option<Move> {
         todo!();
     }
 
-    fn random(board: &Board) -> Option<Move> {
+    fn random(_board: &Board) -> Option<Move> {
         todo!();
     }
 
     fn computer(board: &Board) -> Option<Move> {
-        todo!();
+        Self::random(board)
     }
 }
 
@@ -55,25 +55,40 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic) {
         );
     board.pretty_print();
 
-    loop {
-        let chosen_move = match board.player {
-            Some(Player::Black) => black.choose_move(&board),
-            Some(Player::White) => white.choose_move(&board),
-            None => todo!(),
-        };
+    while let Some(player) = board.player {
+        let chosen_move = match player {
+            Player::Black => black,
+            Player::White => white,
+        }.choose_move(&board);
 
-        match chosen_move {
-            None => {
-                println!("{} resigned.", String::from(board.player.expect("?")).to_title_case());
-                break;
-            },
-            Some(m) => {
-                board = board.play(m).expect("invalid move");
-            },
-        }
+        let Some(m) = chosen_move else { break; };
 
-        todo!();
+        board = board.play(m).expect("choose_move should return a valid move");
+        board.pretty_print();
     }
+
+    match board.player {
+        Some(player) => {
+            println!("{} resigned.", String::from(player).to_title_case());
+            println!("{} wins!", String::from(player.other()).to_title_case());
+        },
+        None => {
+            let (black, white) = board.score();
+            match black.cmp(&white) {
+                std::cmp::Ordering::Less => {
+                    println!("{} wins!", String::from(Player::Black).to_title_case());
+                },
+                std::cmp::Ordering::Greater => {
+                    println!("{} wins!", String::from(Player::White).to_title_case());
+                },
+                std::cmp::Ordering::Equal => {
+                    println!("It's a tie!");
+                },
+            }
+        }
+    }
+
+    println!("Thanks for playing, see you soon!");
 }
 
 fn main() -> Result<(), ParsingError> {

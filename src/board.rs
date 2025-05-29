@@ -14,7 +14,7 @@ pub enum Player {
 }
 
 impl Player {
-    fn other(&self) -> Self {
+    pub fn other(&self) -> Self {
         match self {
             Self::Black => Self::White,
             Self::White => Self::Black,
@@ -134,7 +134,7 @@ impl Board {
         }
     }
 
-    fn score(&self) -> (u32, u32) {
+    pub fn score(&self) -> (u32, u32) {
         (self.black.popcount(), self.white.popcount())
     }
 
