@@ -124,7 +124,7 @@ impl Board {
         compute_moves(player, opponent)
     }
 
-    fn moves(&self) -> Vec<Move> {
+    pub fn moves(&self) -> Vec<Move> {
         self.moves.clone().map(|(x, y)| Move { x, y }).collect()
     }
 

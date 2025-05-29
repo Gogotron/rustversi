@@ -3,6 +3,7 @@ use board::{Board, ParsingError, Player, Move};
 
 use std::path::PathBuf;
 use std::fs::File;
+use rand::{seq::IteratorRandom, rng};
 use clap::{command, arg, ArgAction, value_parser};
 use heck::ToTitleCase;
 
@@ -26,8 +27,9 @@ impl Tactic {
         todo!();
     }
 
-    fn random(_board: &Board) -> Option<Move> {
-        todo!();
+    fn random(board: &Board) -> Option<Move> {
+        let moves = board.moves();
+        moves.into_iter().choose(&mut rng())
     }
 
     fn computer(board: &Board) -> Option<Move> {
