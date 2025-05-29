@@ -13,16 +13,6 @@ enum Tactic {
     Computer,
 }
 
-impl From<&Tactic> for String {
-    fn from(t: &Tactic) -> String {
-        match *t {
-            Tactic::Human => "human",
-            Tactic::Random => "random",
-            Tactic::Computer => "ai",
-        }.into()
-    }
-}
-
 impl Tactic {
     fn choose_move(&self, board: &Board) -> Option<Move> {
         match self {
@@ -42,6 +32,16 @@ impl Tactic {
 
     fn computer(board: &Board) -> Option<Move> {
         Self::random(board)
+    }
+}
+
+impl From<&Tactic> for String {
+    fn from(t: &Tactic) -> String {
+        match *t {
+            Tactic::Human => "human",
+            Tactic::Random => "random",
+            Tactic::Computer => "ai",
+        }.into()
     }
 }
 

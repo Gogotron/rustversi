@@ -13,6 +13,12 @@ pub enum Player {
     White
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Square {
+    Disc(Player),
+    Empty,
+}
+
 impl Player {
     pub fn other(&self) -> Self {
         match self {
@@ -22,61 +28,17 @@ impl Player {
     }
 }
 
-impl From<Player> for String {
-    fn from(p: Player) -> Self {
-        match p {
-            Player::Black => "black",
-            Player::White => "white",
-        }.into()
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Square {
-    Disc(Player),
-    Empty,
-}
-
-impl From<Player> for char {
-    fn from(val: Player) -> Self {
-        match val {
-            Player::Black => 'X',
-            Player::White => 'O',
-        }
-    }
-}
-
-impl From<Square> for char {
-    fn from(val: Square) -> Self {
-        match val {
-            Square::Disc(p) => p.into(),
-            Square::Empty => '_',
-        }
-    }
-}
-
-impl From<Square> for Option<Player> {
-    fn from(val: Square) -> Self {
-        match val {
-            Square::Disc(p) => Some(p),
-            Square::Empty => None,
-        }
-    }
-}
-
-impl TryFrom<char> for Square {
-    type Error = ();
-    fn try_from(val: char) -> Result<Self, Self::Error> {
-        match val {
-            'X' => Ok(Square::Disc(Player::Black)),
-            'O' => Ok(Square::Disc(Player::White)),
-            '_' => Ok(Square::Empty),
-            _ => Err(()),
-        }
-    }
-}
-
 pub struct Move { x: u8, y: u8, }
+
+#[derive(Debug, PartialEq)]
+pub enum ParsingError {
+    IOError,
+    Generic,
+    EmptyFile,
+    InvalidCharacter,
+    BadSize,
+    InconsistentSize,
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Board {
@@ -272,19 +234,51 @@ impl Board {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub enum ParsingError {
-    IOError,
-    Generic,
-    EmptyFile,
-    InvalidCharacter,
-    BadSize,
-    InconsistentSize,
+impl From<Player> for String {
+    fn from(p: Player) -> Self {
+        match p {
+            Player::Black => "black",
+            Player::White => "white",
+        }.into()
+    }
 }
 
-impl From<std::io::Error> for ParsingError {
-    fn from(_val: std::io::Error) -> Self {
-        Self::IOError
+impl From<Player> for char {
+    fn from(val: Player) -> Self {
+        match val {
+            Player::Black => 'X',
+            Player::White => 'O',
+        }
+    }
+}
+
+impl From<Square> for char {
+    fn from(val: Square) -> Self {
+        match val {
+            Square::Disc(p) => p.into(),
+            Square::Empty => '_',
+        }
+    }
+}
+
+impl From<Square> for Option<Player> {
+    fn from(val: Square) -> Self {
+        match val {
+            Square::Disc(p) => Some(p),
+            Square::Empty => None,
+        }
+    }
+}
+
+impl TryFrom<char> for Square {
+    type Error = ();
+    fn try_from(val: char) -> Result<Self, Self::Error> {
+        match val {
+            'X' => Ok(Square::Disc(Player::Black)),
+            'O' => Ok(Square::Disc(Player::White)),
+            '_' => Ok(Square::Empty),
+            _ => Err(()),
+        }
     }
 }
 
@@ -294,10 +288,9 @@ impl From<()> for ParsingError {
     }
 }
 
-fn next_ignore_chars<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
-    match iter.find(|c| !c.is_ascii_whitespace() || *c =='\n') {
-        Some('#') => iter.find(|c| *c == '\n'),
-        c => c,
+impl From<std::io::Error> for ParsingError {
+    fn from(_val: std::io::Error) -> Self {
+        Self::IOError
     }
 }
 
@@ -372,6 +365,13 @@ impl TryFrom<File> for Board {
             white,
             moves,
         })
+    }
+}
+
+fn next_ignore_chars<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
+    match iter.find(|c| !c.is_ascii_whitespace() || *c =='\n') {
+        Some('#') => iter.find(|c| *c == '\n'),
+        c => c,
     }
 }
 
