@@ -5,6 +5,7 @@ use bitmap::Bitmap;
 
 use std::fs::File;
 use std::io::{stdout, BufReader, Read};
+use std::str::FromStr;
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -128,6 +129,10 @@ impl Board {
         self.moves.clone().map(|(x, y)| Move { x, y }).collect()
     }
 
+    pub fn is_valid_move(&self, m: &Move) -> bool {
+        self.moves.get(m.x, m.y)
+    }
+
     pub fn play(&self, m: Move) -> Option<Self> {
         let (x, y) = (m.x, m.y);
         if !self.moves.get(x, y) {
@@ -234,6 +239,30 @@ impl Board {
     }
 }
 
+impl FromStr for Move {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.is_ascii() { return Err(()) };
+
+        let Some(mut column) = s.chars().nth(0) else {
+            return Err(());
+        };
+        column.make_ascii_uppercase();
+        if !(column >= 'A' && column <= 'Z') {
+            return Err(());
+        }
+        let column = (column as u8) - b'A';
+
+        let (_, row) = s.split_at(1);
+        let Ok(row): Result<u8, _> = row.parse() else {
+            return Err(());
+        };
+
+        Ok(Move { x: row, y: column })
+    }
+}
+
 impl From<Player> for String {
     fn from(p: Player) -> Self {
         match p {
@@ -272,6 +301,7 @@ impl From<Square> for Option<Player> {
 
 impl TryFrom<char> for Square {
     type Error = ();
+
     fn try_from(val: char) -> Result<Self, Self::Error> {
         match val {
             'X' => Ok(Square::Disc(Player::Black)),

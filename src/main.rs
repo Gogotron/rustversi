@@ -3,6 +3,7 @@ use board::{Board, ParsingError, Player, Move};
 
 use std::path::PathBuf;
 use std::fs::File;
+use std::io;
 use rand::{seq::IteratorRandom, rng};
 use clap::{command, arg, ArgAction, value_parser};
 use heck::ToTitleCase;
@@ -23,8 +24,20 @@ impl Tactic {
         }
     }
 
-    fn human(_board: &Board) -> Option<Move> {
-        todo!();
+    fn human(board: &Board) -> Option<Move> {
+        loop {
+            println!("Give your move (e.g. 'A5' or 'a5'), 'q' or 'Q' to quit: ");
+            let mut input = String::new();
+            let _ = io::stdin().read_line(&mut input);
+            let content = input.trim();
+            if content == "q" || content == "Q" {
+                return None;
+            }
+            match content.parse().ok().filter(|m| board.is_valid_move(m)) {
+                Some(m) => return Some(m),
+                None => println!("Invalid input. Try again."),
+            };
+        }
     }
 
     fn random(board: &Board) -> Option<Move> {
