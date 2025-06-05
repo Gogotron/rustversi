@@ -2,6 +2,7 @@ mod board;
 use board::{Board, ParsingError, Player, Move};
 
 use std::path::PathBuf;
+use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::Write;
@@ -30,9 +31,18 @@ impl Tactic {
             print!("Give your move (e.g. 'A5' or 'a5'), 'q' or 'Q' to quit: ");
             io::stdout().flush().unwrap();
             let mut input = String::new();
-            let _ = io::stdin().read_line(&mut input);
+            io::stdin().read_line(&mut input).unwrap();
             let content = input.trim();
             if content == "q" || content == "Q" {
+                print!("Quitting, do you want to save this game (y/N)? ");
+                io::stdout().flush().unwrap();
+                let mut input = String::new();
+                io::stdin().read_line(&mut input).unwrap();
+                input.make_ascii_uppercase();
+                let content = input.trim();
+                if content == "Y" {
+                    save(board);
+                }
                 return None;
             }
             match content.parse().ok().filter(|m| board.is_valid_move(m)) {
@@ -106,6 +116,19 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic) {
     }
 
     println!("Thanks for playing, see you soon!");
+}
+
+fn save(board: &Board) {
+    print!("Give a filename to save the game (default: 'board.txt'): ");
+    io::stdout().flush().unwrap();
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).unwrap();
+    let name = input.trim();
+    let name = if name.is_empty() {
+        "default.txt"
+    } else { name };
+
+    fs::write(name, String::from(board)).expect("could not write file");
 }
 
 fn main() -> Result<(), ParsingError> {

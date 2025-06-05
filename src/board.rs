@@ -300,6 +300,15 @@ impl From<Square> for Option<Player> {
     }
 }
 
+impl From<Option<Player>> for Square {
+    fn from(val: Option<Player>) -> Self {
+        match val {
+            Some(p) => Square::Disc(p),
+            None => Square::Empty,
+        }
+    }
+}
+
 impl TryFrom<char> for Square {
     type Error = ();
 
@@ -396,6 +405,21 @@ impl TryFrom<File> for Board {
             white,
             moves,
         })
+    }
+}
+
+impl From<&Board> for String {
+    fn from(b: &Board) -> Self {
+        let mut out = String::new();
+        out.push(Square::from(b.player).into());
+        out.push('\n');
+        for y in 0..b.size {
+            for x in 0..b.size {
+                out.push(b.get(x, y).into());
+            }
+            out.push('\n');
+        }
+        out
     }
 }
 
