@@ -4,6 +4,7 @@ use board::{Board, ParsingError, Player, Move};
 use std::path::PathBuf;
 use std::fs::File;
 use std::io;
+use std::io::Write;
 use rand::{seq::IteratorRandom, rng};
 use clap::{command, arg, ArgAction, value_parser};
 use heck::ToTitleCase;
@@ -26,7 +27,8 @@ impl Tactic {
 
     fn human(board: &Board) -> Option<Move> {
         loop {
-            println!("Give your move (e.g. 'A5' or 'a5'), 'q' or 'Q' to quit: ");
+            print!("Give your move (e.g. 'A5' or 'a5'), 'q' or 'Q' to quit: ");
+            io::stdout().flush().unwrap();
             let mut input = String::new();
             let _ = io::stdin().read_line(&mut input);
             let content = input.trim();
