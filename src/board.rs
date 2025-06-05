@@ -250,7 +250,7 @@ impl FromStr for Move {
             return Err(());
         };
         column.make_ascii_uppercase();
-        if !(column >= 'A' && column <= 'Z') {
+        if !column.is_ascii_uppercase() {
             return Err(());
         }
         let column = (column as u8) - b'A';
