@@ -52,7 +52,7 @@ pub struct Board {
 
 impl Board {
     pub fn new(size: u8) -> Self {
-        assert!(size % 2 == 0 && (4..=10).contains(&size));
+        assert!(size % 2 == 0 && (2..=10).contains(&size));
 
         let black = Bitmap::new(size)
             .set(size / 2, size / 2 - 1)
@@ -67,7 +67,7 @@ impl Board {
             black,
             white,
             moves,
-            player: Some(Player::Black),
+            player: if size != 2 { Some(Player::Black) } else { None },
         }
     }
 
