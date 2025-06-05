@@ -130,7 +130,8 @@ impl Board {
     }
 
     pub fn is_valid_move(&self, m: &Move) -> bool {
-        self.moves.get(m.x, m.y)
+        m.x < self.size && m.y < self.size
+            && self.moves.get(m.x, m.y)
     }
 
     pub fn play(&self, m: Move) -> Option<Self> {
