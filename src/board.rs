@@ -259,7 +259,7 @@ impl FromStr for Move {
             return Err(());
         };
 
-        Ok(Move { x: row, y: column })
+        Ok(Move { x: column, y: row - 1 })
     }
 }
 
