@@ -112,8 +112,9 @@ impl Board {
         }
     }
 
-    pub fn score(&self) -> (u32, u32) {
-        (self.black.popcount(), self.white.popcount())
+    pub fn score(&self) -> (u8, u8) {
+        (self.black.popcount().try_into().unwrap(),
+        self.white.popcount().try_into().unwrap())
     }
 
     fn compute_moves(&self) -> Bitmap {
