@@ -134,7 +134,7 @@ impl Board {
             && self.moves.get(m.x, m.y)
     }
 
-    pub fn play(&self, m: Move) -> Option<Self> {
+    pub fn play(&self, m: &Move) -> Option<Self> {
         let (x, y) = (m.x, m.y);
         if !self.moves.get(x, y) {
             return None;

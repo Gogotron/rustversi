@@ -1,5 +1,6 @@
 mod board;
 use board::{Board, ParsingError, Player, Move};
+mod computer;
 
 use std::path::PathBuf;
 use std::fs;
@@ -58,7 +59,7 @@ impl Tactic {
     }
 
     fn computer(board: &Board) -> Option<Move> {
-        Self::random(board)
+        computer::minmax(board)
     }
 }
 
@@ -90,7 +91,7 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic) {
 
         let Some(m) = chosen_move else { break; };
 
-        board = board.play(m).expect("choose_move should return a valid move");
+        board = board.play(&m).expect("choose_move should return a valid move");
         board.pretty_print();
     }
 
