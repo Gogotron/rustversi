@@ -1,25 +1,27 @@
 use crate::board::{Board, Move, Player};
 
-use std::cmp::Ordering;
+use std::cmp::{Ordering, Ord};
+
+type Heuristic<T> = fn(&Board, &Player) -> T;
 
 pub fn minmax(board: &Board) -> Option<Move> {
     let player = board.player?;
 
     board.moves().into_iter().max_by_key(|m| {
-        helper(&board.play(m).unwrap(), player, 3)
+        helper(&board.play(m).unwrap(), &player, 3, heuristic)
     })
 }
 
-fn helper(board: &Board, player: Player, depth: u8) -> i16 {
+fn helper<T: Ord>(board: &Board, player: &Player, depth: u8, heuristic: Heuristic<T>) -> T {
     if depth == 0 || board.player.is_none() {
         return heuristic(board, player);
     }
 
     let current_player = board.player.unwrap();
-    let maximize = current_player == player;
+    let maximize = current_player == *player;
 
     let branches = board.moves().into_iter().map(|m| {
-        helper(&board.play(&m).unwrap(), player, depth - 1)
+        helper(&board.play(&m).unwrap(), player, depth - 1, heuristic)
     });
 
     if maximize {
@@ -29,7 +31,7 @@ fn helper(board: &Board, player: Player, depth: u8) -> i16 {
     }.unwrap()
 }
 
-fn heuristic(board: &Board, player: Player) -> i16 {
+fn heuristic(board: &Board, player: &Player) -> i16 {
     let (b, w) = board.score();
     let rel_score: i16 = match player {
         Player::Black => b as i16 - w as i16,
