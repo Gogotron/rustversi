@@ -1,13 +1,16 @@
 use crate::board::{Board, Move, Player};
 
 use std::cmp::{Ordering, Ord};
+use rand::{rng, seq::SliceRandom};
 
 type Heuristic<T> = fn(&Board, &Player) -> T;
 
 pub fn minmax(board: &Board) -> Option<Move> {
     let player = board.player?;
 
-    board.moves().into_iter().max_by_key(|m| {
+    let mut moves = board.moves();
+    moves.shuffle(&mut rng());
+    moves.into_iter().max_by_key(|m| {
         helper(&board.play(m).unwrap(), &player, 3, heuristic)
     })
 }
