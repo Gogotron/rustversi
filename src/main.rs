@@ -7,7 +7,7 @@ use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::Write;
-use rand::{seq::IteratorRandom, rng};
+use rand::{seq::IndexedRandom, rng};
 use clap::{command, arg, ArgAction, value_parser};
 use heck::ToTitleCase;
 
@@ -55,7 +55,7 @@ impl Tactic {
 
     fn random(board: &Board) -> Option<Move> {
         let moves = board.moves();
-        moves.into_iter().choose(&mut rng())
+        moves.choose(&mut rng()).map(|m| *m)
     }
 
     fn computer(board: &Board) -> Option<Move> {
