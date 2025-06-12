@@ -55,7 +55,7 @@ impl Tactic {
 
     fn random(board: &Board) -> Option<Move> {
         let moves = board.moves();
-        moves.choose(&mut rng()).map(|m| *m)
+        moves.choose(&mut rng()).copied()
     }
 
     fn computer(board: &Board) -> Option<Move> {
