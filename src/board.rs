@@ -156,7 +156,7 @@ impl Board {
           let mut prev_line = Bitmap::new(self.size);
           let mut line = shift(&move_mask);
 
-          while line != prev_line && line.subset(opponent) {
+          while line != prev_line && line.subset_of(opponent) {
             prev_line = line;
             line = prev_line.union(&shift(&prev_line));
           }

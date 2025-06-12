@@ -151,14 +151,14 @@ impl Bitmap {
         self.intersection(&other.not())
     }
 
-    pub fn subset(&self, other: &Self) -> bool {
+    pub fn subset_of(&self, other: &Self) -> bool {
         assert_eq!(self.size, other.size);
-        self.union(other) == *self
+        self.union(other) == *other
     }
 
-    pub fn supset(&self, other: &Self) -> bool {
+    pub fn superset_of(&self, other: &Self) -> bool {
         assert_eq!(self.size, other.size);
-        self.intersection(other) == *self
+        self.intersection(other) == *other
     }
 
     pub fn print(&self) {

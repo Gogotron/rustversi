@@ -4,7 +4,6 @@ use std::cmp::Ordering;
 
 pub fn minmax(board: &Board) -> Option<Move> {
     let player = board.player?;
-    assert_eq!(player, Player::Black);
 
     board.moves().into_iter().max_by_key(|m| {
         helper(&board.play(m).unwrap(), player, 3)
@@ -18,7 +17,6 @@ fn helper(board: &Board, player: Player, depth: u8) -> i16 {
 
     let current_player = board.player.unwrap();
     let maximize = current_player == player;
-    println!("{}", maximize);
 
     let branches = board.moves().into_iter().map(|m| {
         helper(&board.play(&m).unwrap(), player, depth - 1)
