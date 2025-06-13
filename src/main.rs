@@ -162,7 +162,6 @@ fn main() -> Result<(), ParsingError> {
 
     let size = matches.get_one::<u8>("size").expect("default ensures there is always a value") * 2;
     let _timeout = matches.get_one::<u8>("timeout").expect("default ensures there is always a value");
-    let _white_ai = matches.get_one::<u8>("WHITE").expect("default ensures there is always a value");
     let _contest = matches.get_one::<bool>("contest").expect("flag always has value");
     let _verbose = matches.get_one::<bool>("verbose").expect("flag always has value");
 
