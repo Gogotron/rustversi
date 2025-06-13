@@ -1,13 +1,14 @@
 use crate::board::{Board, Move, Player};
 
-use std::fmt::Display;
 use std::cmp;
 use std::cmp::{Ordering, Ord};
 use rand::{rng, seq::SliceRandom};
 
+const DEPTH: u8 = 5;
+
 type Heuristic<T> = fn(&Board, &Player) -> T;
 
-pub trait BoundedOrd: Ord + Display {
+pub trait BoundedOrd: Ord {
     const MIN: Self;
     const MAX: Self;
 }
@@ -18,9 +19,13 @@ impl BoundedOrd for i16 {
 }
 
 pub fn minmax(board: &Board) -> Option<Move> {
+    generic_minmax(board, heuristic)
+}
+
+fn generic_minmax<T: Ord>(board: &Board, heuristic: Heuristic<T>) -> Option<Move> {
     let player = board.player?;
 
-    let depth = 4;
+    let depth = DEPTH;
     let mut moves = board.moves();
     moves.shuffle(&mut rng());
     moves.into_iter().max_by_key(|m| {
@@ -57,7 +62,7 @@ fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, heuristic: Heuristic<T
     let mut moves = board.moves();
     moves.shuffle(&mut rng());
 
-    let depth = 4;
+    let depth = DEPTH;
     let mut alpha = T::MIN;
     let beta = T::MAX;
     let mut optimal_move = moves[0];
@@ -123,7 +128,7 @@ fn heuristic(board: &Board, player: &Player) -> i16 {
         Player::White => w as i16 - b as i16,
     };
 
-    let rel_score = if board.player.is_none() {
+    if board.player.is_none() {
         match rel_score.cmp(&0) {
             Ordering::Less => i16::MIN,
             Ordering::Greater => i16::MAX,
@@ -131,6 +136,5 @@ fn heuristic(board: &Board, player: &Player) -> i16 {
         }
     } else {
         rel_score
-    };
-    rel_score
+    }
 }
