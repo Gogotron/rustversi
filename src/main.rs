@@ -140,6 +140,10 @@ fn main() -> Result<(), ParsingError> {
             .value_parser(value_parser!(u8)
                 .range(1..6)
             ).default_value("4")
+        ).arg(arg!(-t --timeout <TIMEOUT> "set AI timeout")
+            .value_parser(value_parser!(u8)
+                .range(1..)
+            ).default_value("5")
         ).arg(arg!(-b [BLACK] "set tactic of black player")
             .long("black-ai")
             .value_parser(value_parser!(u8)
@@ -157,6 +161,7 @@ fn main() -> Result<(), ParsingError> {
         ).get_matches();
 
     let size = matches.get_one::<u8>("size").expect("default ensures there is always a value") * 2;
+    let _timeout = matches.get_one::<u8>("timeout").expect("default ensures there is always a value");
     let _white_ai = matches.get_one::<u8>("WHITE").expect("default ensures there is always a value");
     let _contest = matches.get_one::<bool>("contest").expect("flag always has value");
     let _verbose = matches.get_one::<bool>("verbose").expect("flag always has value");
