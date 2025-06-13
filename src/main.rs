@@ -103,10 +103,10 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic) {
         None => {
             let (black, white) = board.score();
             match black.cmp(&white) {
-                std::cmp::Ordering::Less => {
+                std::cmp::Ordering::Greater => {
                     println!("{} wins!", String::from(Player::Black).to_title_case());
                 },
-                std::cmp::Ordering::Greater => {
+                std::cmp::Ordering::Less => {
                     println!("{} wins!", String::from(Player::White).to_title_case());
                 },
                 std::cmp::Ordering::Equal => {
