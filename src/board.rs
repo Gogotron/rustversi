@@ -261,6 +261,9 @@ impl FromStr for Move {
         let Ok(row): Result<u8, _> = row.parse() else {
             return Err(());
         };
+        if row <= 1 {
+            return Err(());
+        }
 
         Ok(Move { x: column, y: row - 1 })
     }
