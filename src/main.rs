@@ -126,7 +126,7 @@ fn save(board: &Board) {
     io::stdin().read_line(&mut input).unwrap();
     let name = input.trim();
     let name = if name.is_empty() {
-        "default.txt"
+        "board.txt"
     } else { name };
 
     fs::write(name, String::from(board)).expect("could not write file");
