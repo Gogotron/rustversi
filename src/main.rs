@@ -162,7 +162,7 @@ fn main() -> Result<(), ParsingError> {
 
     let size = matches.get_one::<u8>("size").expect("default ensures there is always a value") * 2;
     let _timeout = matches.get_one::<u8>("timeout").expect("default ensures there is always a value");
-    let _contest = matches.get_one::<bool>("contest").expect("flag always has value");
+    let contest = *matches.get_one::<bool>("contest").expect("flag always has value");
     let _verbose = matches.get_one::<bool>("verbose").expect("flag always has value");
 
     let black_ai = match matches.get_one::<u8>("BLACK") {
@@ -183,7 +183,11 @@ fn main() -> Result<(), ParsingError> {
         _ => Board::new(size),
     };
 
-    game(board, &black_ai, &white_ai);
+    if contest {
+        todo!();
+    } else {
+        game(board, &black_ai, &white_ai);
+    }
 
     Ok(())
 }
