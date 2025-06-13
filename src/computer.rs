@@ -60,7 +60,7 @@ fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, heuristic: Heuristic<T
     let depth = 4;
     let mut alpha = T::MIN;
     let beta = T::MAX;
-    let mut optimal_move = None;
+    let mut optimal_move = moves[0];
     let mut optimal_eval = T::MIN;
     for m in moves {
         let eval = ab_helper(&board.play(&m).unwrap(), player, depth - 1, alpha, beta, heuristic);
@@ -73,7 +73,7 @@ fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, heuristic: Heuristic<T
         alpha = cmp::max(optimal_eval, alpha);
 
         if eval == optimal_eval {
-            optimal_move = Some(m);
+            optimal_move = m;
         }
 
         if alpha >= beta {
@@ -81,7 +81,7 @@ fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, heuristic: Heuristic<T
         }
     }
 
-    optimal_move
+    Some(optimal_move)
 }
 
 fn ab_helper<T: BoundedOrd + Copy>(board: &Board, player: &Player, depth: u8, mut alpha: T, mut beta: T, heuristic: Heuristic<T>) -> T {
