@@ -345,7 +345,7 @@ impl TryFrom<File> for Board {
             .filter(|r| r.is_ok())
             .map(|c| c.expect("Should be Ok.") as char);
 
-        let player: Option<Player> = match next_ignore_chars(&mut chars) {
+        let mut player: Option<Player> = match next_ignore_chars(&mut chars) {
             Some(c) => Square::try_from(c)?.into(),
             None => return Err(Self::Error::EmptyFile),
         };
@@ -359,7 +359,7 @@ impl TryFrom<File> for Board {
             }
         }
         let size = first_row.len();
-        if !(size % 2 == 0 && (4..=10).contains(&size)) {
+        if !(size % 2 == 0 && (2..=10).contains(&size)) {
             return Err(Self::Error::BadSize)
         }
 
@@ -395,8 +395,22 @@ impl TryFrom<File> for Board {
             .collect::<Vec<Vec<bool>>>()
             .into();
         let moves = match player {
-            Some(Player::Black) => compute_moves(&black, &white),
-            Some(Player::White) => compute_moves(&white, &black),
+            Some(p) => {
+                let (first, second) = match p {
+                    Player::Black => (&black, &white),
+                    Player::White => (&white, &black),
+                };
+                let moves = compute_moves(first, second);
+                if !moves.is_empty() {
+                    moves
+                } else {
+                    let moves = compute_moves(second, first);
+                    player = if !moves.is_empty() {
+                        Some(p.other())
+                    } else { None };
+                    moves
+                }
+            },
             None => Bitmap::empty(size),
         };
 
