@@ -59,7 +59,7 @@ impl Tactic {
     }
 
     fn computer(board: &Board) -> Option<Move> {
-        computer::minmax(board)
+        computer::ab_minmax(board)
     }
 }
 

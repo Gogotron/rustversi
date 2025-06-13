@@ -29,7 +29,7 @@ impl Player {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Move { x: u8, y: u8, }
 
 #[derive(Debug, PartialEq)]
