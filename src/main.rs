@@ -1,15 +1,15 @@
 mod board;
-use board::{Board, ParsingError, Player, Move};
+use board::{Board, Move, ParsingError, Player};
 mod computer;
 
-use std::path::PathBuf;
-use std::fs;
-use std::fs::File;
-use std::io;
-use std::io::Write;
-use std::time::Duration;
-use rand::{seq::IndexedRandom, rng};
-use clap::{command, arg, ArgAction, value_parser};
+use std::{
+    fs::{File, write},
+    io::{Write, stdin, stdout},
+    path::PathBuf,
+    time::Duration,
+};
+use clap::{ArgAction, arg, command, value_parser};
+use rand::{rng, seq::IndexedRandom};
 use heck::ToTitleCase;
 
 #[derive(Clone)]
@@ -31,15 +31,15 @@ impl Tactic {
     fn human(board: &Board) -> Option<Move> {
         loop {
             print!("Give your move (e.g. 'A5' or 'a5'), 'q' or 'Q' to quit: ");
-            io::stdout().flush().unwrap();
+            stdout().flush().unwrap();
             let mut input = String::new();
-            io::stdin().read_line(&mut input).unwrap();
+            stdin().read_line(&mut input).unwrap();
             let content = input.trim();
             if content == "q" || content == "Q" {
                 print!("Quitting, do you want to save this game (y/N)? ");
-                io::stdout().flush().unwrap();
+                stdout().flush().unwrap();
                 let mut input = String::new();
-                io::stdin().read_line(&mut input).unwrap();
+                stdin().read_line(&mut input).unwrap();
                 input.make_ascii_uppercase();
                 let content = input.trim();
                 if content == "Y" {
@@ -122,15 +122,15 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic, timeout: Duration) {
 
 fn save(board: &Board) {
     print!("Give a filename to save the game (default: 'board.txt'): ");
-    io::stdout().flush().unwrap();
+    stdout().flush().unwrap();
     let mut input = String::new();
-    io::stdin().read_line(&mut input).unwrap();
+    stdin().read_line(&mut input).unwrap();
     let name = input.trim();
     let name = if name.is_empty() {
         "board.txt"
     } else { name };
 
-    fs::write(name, String::from(board)).expect("could not write file");
+    write(name, String::from(board)).expect("could not write file");
 }
 
 fn main() -> Result<(), ParsingError> {

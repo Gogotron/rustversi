@@ -1,7 +1,9 @@
 #![allow(unused)]
 
-use std::ops::{BitAnd, BitOr};
-use std::io::stdout;
+use std::{
+    io::stdout,
+    ops::{BitAnd, BitOr},
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bitmap {

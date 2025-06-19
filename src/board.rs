@@ -3,9 +3,11 @@
 mod bitmap;
 use bitmap::Bitmap;
 
-use std::fs::File;
-use std::io::{stdout, BufReader, Read};
-use std::str::FromStr;
+use std::{
+    fs::File,
+    io::{BufReader, Read, stdout},
+    str::FromStr,
+};
 
 
 #[derive(Debug, Clone, Copy, PartialEq)]

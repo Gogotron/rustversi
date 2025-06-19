@@ -1,9 +1,10 @@
 use crate::board::{Board, Move, Player};
 
-use std::cmp;
-use std::cmp::{Ordering, Ord};
+use std::{
+    cmp::{max, min, Ord, Ordering},
+    time::{Duration, Instant}
+};
 use rand::{rng, seq::SliceRandom};
-use std::time::{Duration, Instant};
 
 const DEPTH: u8 = 10;
 
@@ -81,8 +82,8 @@ fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, timeout: Duration, heu
             continue;
         }
 
-        optimal_eval = cmp::max(eval, optimal_eval);
-        alpha = cmp::max(optimal_eval, alpha);
+        optimal_eval = max(eval, optimal_eval);
+        alpha = max(optimal_eval, alpha);
 
         if eval == optimal_eval {
             optimal_move = m;
@@ -113,11 +114,11 @@ fn ab_helper<T: BoundedOrd + Copy>(board: &Board, player: &Player, depth: u8, mu
         }
 
         if maximize {
-            optimal_eval = cmp::max(eval, optimal_eval);
-            alpha = cmp::max(optimal_eval, alpha);
+            optimal_eval = max(eval, optimal_eval);
+            alpha = max(optimal_eval, alpha);
         } else {
-            optimal_eval = cmp::min(eval, optimal_eval);
-            beta = cmp::min(optimal_eval, beta);
+            optimal_eval = min(eval, optimal_eval);
+            beta = min(optimal_eval, beta);
         }
 
         if alpha >= beta {
