@@ -185,7 +185,7 @@ fn main() -> Result<(), ParsingError> {
     };
 
     if contest {
-        todo!();
+        println!("{}", String::from(Tactic::Computer.choose_move(&board, timeout).unwrap()));
     } else {
         game(board, &black_ai, &white_ai, timeout);
     }

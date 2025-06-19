@@ -269,6 +269,12 @@ impl FromStr for Move {
     }
 }
 
+impl From<Move> for String {
+    fn from(m: Move) -> Self {
+        format!("{}{}", (m.y + b'A') as char, m.x + 1)
+    }
+}
+
 impl From<Player> for String {
     fn from(p: Player) -> Self {
         match p {
