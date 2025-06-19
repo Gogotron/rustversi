@@ -3,8 +3,9 @@ use crate::board::{Board, Move, Player};
 use std::cmp;
 use std::cmp::{Ordering, Ord};
 use rand::{rng, seq::SliceRandom};
+use std::time::{Duration, Instant};
 
-const DEPTH: u8 = 5;
+const DEPTH: u8 = 10;
 
 type Heuristic<T> = fn(&Board, &Player) -> T;
 
@@ -52,12 +53,15 @@ fn helper<T: Ord>(board: &Board, player: &Player, depth: u8, heuristic: Heuristi
     }.unwrap()
 }
 
-pub fn ab_minmax(board: &Board) -> Option<Move> {
-    generic_ab_minmax(board, heuristic)
+pub fn ab_minmax(board: &Board, timeout: Duration) -> Option<Move> {
+    generic_ab_minmax(board, timeout, heuristic)
 }
 
-fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, heuristic: Heuristic<T>) -> Option<Move> {
+fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, timeout: Duration, heuristic: Heuristic<T>) -> Option<Move> {
     let player = &board.player?;
+
+    let start = Instant::now();
+    let end = start + timeout;
 
     let mut moves = board.moves();
     moves.shuffle(&mut rng());
@@ -68,7 +72,7 @@ fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, heuristic: Heuristic<T
     let mut optimal_move = moves[0];
     let mut optimal_eval = T::MIN;
     for m in moves {
-        let eval = ab_helper(&board.play(&m).unwrap(), player, depth - 1, alpha, beta, heuristic);
+        let eval = ab_helper(&board.play(&m).unwrap(), player, depth - 1, alpha, beta, end, heuristic);
 
         if eval == optimal_eval {
             continue;
@@ -89,8 +93,8 @@ fn generic_ab_minmax<T: BoundedOrd + Copy>(board: &Board, heuristic: Heuristic<T
     Some(optimal_move)
 }
 
-fn ab_helper<T: BoundedOrd + Copy>(board: &Board, player: &Player, depth: u8, mut alpha: T, mut beta: T, heuristic: Heuristic<T>) -> T {
-    if depth == 0 || board.player.is_none() {
+fn ab_helper<T: BoundedOrd + Copy>(board: &Board, player: &Player, depth: u8, mut alpha: T, mut beta: T, end: Instant, heuristic: Heuristic<T>) -> T {
+    if depth == 0 || board.player.is_none() || Instant::now() >= end {
         return heuristic(board, player);
     }
 
@@ -99,7 +103,7 @@ fn ab_helper<T: BoundedOrd + Copy>(board: &Board, player: &Player, depth: u8, mu
 
     let mut optimal_eval = if maximize { T::MIN } else { T::MAX };
     for m in board.moves() {
-        let eval = ab_helper(&board.play(&m).unwrap(), player, depth - 1, alpha, beta, heuristic);
+        let eval = ab_helper(&board.play(&m).unwrap(), player, depth - 1, alpha, beta, end, heuristic);
 
         if eval == optimal_eval {
             continue;

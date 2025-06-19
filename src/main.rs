@@ -7,6 +7,7 @@ use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::Write;
+use std::time::Duration;
 use rand::{seq::IndexedRandom, rng};
 use clap::{command, arg, ArgAction, value_parser};
 use heck::ToTitleCase;
@@ -19,11 +20,11 @@ enum Tactic {
 }
 
 impl Tactic {
-    fn choose_move(&self, board: &Board) -> Option<Move> {
+    fn choose_move(&self, board: &Board, timeout: Duration) -> Option<Move> {
         match self {
             Self::Human => Self::human(board),
             Self::Random => Self::random(board),
-            Self::Computer => Self::computer(board),
+            Self::Computer => Self::computer(board, timeout),
         }
     }
 
@@ -58,8 +59,8 @@ impl Tactic {
         moves.choose(&mut rng()).copied()
     }
 
-    fn computer(board: &Board) -> Option<Move> {
-        computer::ab_minmax(board)
+    fn computer(board: &Board, timeout: Duration) -> Option<Move> {
+        computer::ab_minmax(board, timeout)
     }
 }
 
@@ -73,7 +74,7 @@ impl From<&Tactic> for String {
     }
 }
 
-fn game(mut board: Board, black: &Tactic, white: &Tactic) {
+fn game(mut board: Board, black: &Tactic, white: &Tactic, timeout: Duration) {
     println!("Welcome to this reversi game!");
     println!("{} player ({}) is {} and {} player ({}) is {}.",
         String::from(Player::Black).to_title_case(),
@@ -87,7 +88,7 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic) {
         let chosen_move = match player {
             Player::Black => black,
             Player::White => white,
-        }.choose_move(&board);
+        }.choose_move(&board, timeout);
 
         let Some(m) = chosen_move else { break; };
 
@@ -141,7 +142,7 @@ fn main() -> Result<(), ParsingError> {
                 .range(1..6)
             ).default_value("4")
         ).arg(arg!(-t --timeout <TIMEOUT> "set AI timeout")
-            .value_parser(value_parser!(u8)
+            .value_parser(value_parser!(u64)
                 .range(1..)
             ).default_value("5")
         ).arg(arg!(-b [BLACK] "set tactic of black player")
@@ -161,7 +162,7 @@ fn main() -> Result<(), ParsingError> {
         ).get_matches();
 
     let size = matches.get_one::<u8>("size").expect("default ensures there is always a value") * 2;
-    let _timeout = matches.get_one::<u8>("timeout").expect("default ensures there is always a value");
+    let timeout = Duration::from_secs(*matches.get_one::<u64>("timeout").expect("default ensures there is always a value"));
     let contest = *matches.get_one::<bool>("contest").expect("flag always has value");
     let _verbose = matches.get_one::<bool>("verbose").expect("flag always has value");
 
@@ -186,7 +187,7 @@ fn main() -> Result<(), ParsingError> {
     if contest {
         todo!();
     } else {
-        game(board, &black_ai, &white_ai);
+        game(board, &black_ai, &white_ai, timeout);
     }
 
     Ok(())
