@@ -19,23 +19,26 @@ impl BoundedOrd for i16 {
     const MAX: i16 = i16::MAX;
 }
 
-pub fn minmax(board: &Board) -> Option<Move> {
-    generic_minmax(board, heuristic)
+pub fn minmax(board: &Board, timeout: Duration) -> Option<Move> {
+    generic_minmax(board, timeout, heuristic)
 }
 
-fn generic_minmax<T: Ord>(board: &Board, heuristic: Heuristic<T>) -> Option<Move> {
+fn generic_minmax<T: Ord>(board: &Board, timeout: Duration, heuristic: Heuristic<T>) -> Option<Move> {
     let player = board.player?;
+
+    let start = Instant::now();
+    let end = start + timeout;
 
     let depth = DEPTH;
     let mut moves = board.moves();
     moves.shuffle(&mut rng());
     moves.into_iter().max_by_key(|m| {
-        helper(&board.play(m).unwrap(), &player, depth - 1, heuristic)
+        helper(&board.play(m).unwrap(), &player, depth - 1, end, heuristic)
     })
 }
 
-fn helper<T: Ord>(board: &Board, player: &Player, depth: u8, heuristic: Heuristic<T>) -> T {
-    if depth == 0 || board.player.is_none() {
+fn helper<T: Ord>(board: &Board, player: &Player, depth: u8, end: Instant, heuristic: Heuristic<T>) -> T {
+    if depth == 0 || board.player.is_none() || Instant::now() >= end {
         return heuristic(board, player);
     }
 
@@ -43,7 +46,7 @@ fn helper<T: Ord>(board: &Board, player: &Player, depth: u8, heuristic: Heuristi
     let maximize = current_player == *player;
 
     let branches = board.moves().into_iter().map(|m| {
-        helper(&board.play(&m).unwrap(), player, depth - 1, heuristic)
+        helper(&board.play(&m).unwrap(), player, depth - 1, end, heuristic)
     });
 
     if maximize {
