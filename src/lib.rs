@@ -1,4 +1,4 @@
-mod board;
+pub mod board;
 use board::{Board, Move, ParsingError, Player};
 mod computer;
 

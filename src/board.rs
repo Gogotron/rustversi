@@ -17,7 +17,7 @@ pub enum Player {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum Square {
+pub enum Square {
     Disc(Player),
     Empty,
 }
@@ -83,7 +83,7 @@ impl Board {
         } else { Square::Empty }
     }
 
-    fn set(&self, x: u8, y: u8, squ: Square) -> Self {
+    pub fn set(&self, x: u8, y: u8, squ: Square) -> Self {
         assert!(x < self.size && y < self.size);
         let (black, white) = match squ {
             Square::Disc(Player::Black) => (
@@ -552,6 +552,6 @@ mod tests {
         let mut file: File = tempfile::tempfile().unwrap();
         write!(file, "X\n__\nOX_\nXO\n__").unwrap();
         file.seek(SeekFrom::Start(0)).unwrap();
-        assert_eq!(Board::try_from(file), Err(ParsingError::BadSize));
+        assert_eq!(Board::try_from(file), Err(ParsingError::InconsistentSize));
     }
 }
