@@ -40,6 +40,7 @@ pub enum ParsingError {
     Generic,
     EmptyFile,
     InvalidCharacter,
+    PlayerParseError(char),
     BadSize,
     InconsistentSize,
 }
@@ -322,14 +323,17 @@ impl From<Option<Player>> for Square {
     }
 }
 
+pub struct PlayerParseError {
+    c: char
+}
 impl TryFrom<char> for Player {
-    type Error = ();
+    type Error = PlayerParseError;
 
     fn try_from(val: char) -> Result<Self, Self::Error> {
         match val {
             'X' => Ok(Player::Black),
             'O' => Ok(Player::White),
-            _ => Err(()),
+            _ => Err(PlayerParseError { c: val }),
         }
     }
 }
@@ -344,6 +348,12 @@ impl TryFrom<char> for Square {
             '_' => Ok(Square::Empty),
             _ => Err(()),
         }
+    }
+}
+
+impl From<PlayerParseError> for ParsingError {
+    fn from(val: PlayerParseError) -> Self {
+        Self::PlayerParseError(val.c)
     }
 }
 
@@ -368,7 +378,7 @@ impl TryFrom<File> for Board {
             .filter(|r| r.is_ok())
             .map(|c| c.expect("Should be Ok.") as char);
 
-        let player: Player = match next_ignore_chars(&mut chars) {
+        let player: Player = match next_ignore_chars_and_newlines(&mut chars) {
             Some(c) => Player::try_from(c)?,
             None => return Err(Self::Error::EmptyFile),
         };
@@ -396,7 +406,7 @@ impl TryFrom<File> for Board {
                         grid.push(row);
                         row = vec!();
                     }
-                    0 => (),
+                    0 => { },
                     _ => return Err(Self::Error::InconsistentSize),
                 },
                 'X' | 'O' | '_' => {
@@ -463,6 +473,15 @@ fn next_ignore_chars<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
     match iter.find(|c| !c.is_ascii_whitespace() || *c =='\n') {
         Some('#') => iter.find(|c| *c == '\n'),
         c => c,
+    }
+}
+
+fn next_ignore_chars_and_newlines<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
+    loop {
+        match next_ignore_chars(iter) {
+            Some('\n') => { },
+            c => return c,
+        }
     }
 }
 

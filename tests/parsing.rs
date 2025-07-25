@@ -133,7 +133,7 @@ fn empty_file_fail() {
 #[test]
 fn empty_stone_as_current_player_fail() {
     let file = File::open("tests/board_parsing/board-empty_stone_as_current_player.fail").unwrap();
-    assert_eq!(Board::try_from(file), Err(ParsingError::Generic));
+    assert_eq!(Board::try_from(file), Err(ParsingError::PlayerParseError('_')));
 }
 
 #[test]
@@ -267,7 +267,7 @@ fn missing_board_fail() {
 #[test]
 fn missing_current_player_fail() {
     let file = File::open("tests/board_parsing/board-missing_current_player.fail").unwrap();
-    assert_eq!(Board::try_from(file), Err(ParsingError::BadSize));
+    assert_eq!(Board::try_from(file), Err(ParsingError::PlayerParseError('_')));
 }
 
 #[test]
@@ -327,5 +327,5 @@ fn wrong_character_fail() {
 #[test]
 fn wrong_current_player_char_fail() {
     let file = File::open("tests/board_parsing/board-wrong_current_player_char.fail").unwrap();
-    assert_eq!(Board::try_from(file), Err(ParsingError::Generic));
+    assert_eq!(Board::try_from(file), Err(ParsingError::PlayerParseError('Z')));
 }
