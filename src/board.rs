@@ -423,6 +423,10 @@ impl TryFrom<File> for Board {
             _ => return Err(Self::Error::InconsistentSize),
         };
 
+        if grid.len() != size {
+            return Err(ParsingError::InconsistentSize)
+        }
+
         let size = size.try_into().expect("already checked");
         let black = grid.iter()
             .map(|r| r.iter().map(|s| *s == Square::Disc(Player::Black)).collect())

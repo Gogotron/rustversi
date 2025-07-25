@@ -145,7 +145,7 @@ fn eof_after_current_player_fail() {
 #[test]
 fn eof_before_end_of_the_board_fail() {
     let file = File::open("tests/board_parsing/board-eof_before_end_of_the_board.fail").unwrap();
-    assert_eq!(Board::try_from(file), Err(ParsingError::BadSize));
+    assert_eq!(Board::try_from(file), Err(ParsingError::InconsistentSize));
 }
 
 #[test]
