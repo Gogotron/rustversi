@@ -322,6 +322,18 @@ impl From<Option<Player>> for Square {
     }
 }
 
+impl TryFrom<char> for Player {
+    type Error = ();
+
+    fn try_from(val: char) -> Result<Self, Self::Error> {
+        match val {
+            'X' => Ok(Player::Black),
+            'O' => Ok(Player::White),
+            _ => Err(()),
+        }
+    }
+}
+
 impl TryFrom<char> for Square {
     type Error = ();
 
@@ -356,8 +368,8 @@ impl TryFrom<File> for Board {
             .filter(|r| r.is_ok())
             .map(|c| c.expect("Should be Ok.") as char);
 
-        let mut player: Option<Player> = match next_ignore_chars(&mut chars) {
-            Some(c) => Square::try_from(c)?.into(),
+        let player: Player = match next_ignore_chars(&mut chars) {
+            Some(c) => Player::try_from(c)?,
             None => return Err(Self::Error::EmptyFile),
         };
 
@@ -405,24 +417,21 @@ impl TryFrom<File> for Board {
             .map(|r| r.iter().map(|s| *s == Square::Disc(Player::White)).collect())
             .collect::<Vec<Vec<bool>>>()
             .into();
-        let moves = match player {
-            Some(p) => {
-                let (first, second) = match p {
-                    Player::Black => (&black, &white),
-                    Player::White => (&white, &black),
-                };
-                let moves = compute_moves(first, second);
-                if !moves.is_empty() {
-                    moves
-                } else {
-                    let moves = compute_moves(second, first);
-                    player = if !moves.is_empty() {
-                        Some(p.other())
-                    } else { None };
-                    moves
-                }
-            },
-            None => Bitmap::empty(size),
+
+        let (first, second) = match player {
+            Player::Black => (&black, &white),
+            Player::White => (&white, &black),
+        };
+        let moves = compute_moves(first, second);
+        let (moves, player) = if !moves.is_empty() {
+            (moves, Some(player))
+        } else {
+            let moves = compute_moves(second, first);
+            if !moves.is_empty() {
+                (moves, Some(player.other()))
+            } else {
+                (moves, None)
+            }
         };
 
         Ok(Self {
