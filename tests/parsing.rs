@@ -194,6 +194,9 @@ fn impossible_board_01_pass() {
             }
         }
     }
+    board = board
+        .set(3, 4, Square::Empty)
+        .set(4, 3, Square::Empty);
     board.player = None;
 
     let file = File::open("tests/board_parsing/board-impossible_board-01.pass").unwrap();
