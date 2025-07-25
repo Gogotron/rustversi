@@ -417,6 +417,11 @@ impl TryFrom<File> for Board {
                 _ => return Err(Self::Error::InvalidCharacter(c)),
             }
         }
+        match row.len() {
+            l if l == size => { grid.push(row) },
+            0 => { },
+            _ => return Err(Self::Error::InconsistentSize),
+        };
 
         let size = size.try_into().expect("already checked");
         let black = grid.iter()
