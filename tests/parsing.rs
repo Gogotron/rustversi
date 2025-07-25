@@ -321,7 +321,7 @@ fn with_comments_pass() {
 #[test]
 fn wrong_character_fail() {
     let file = File::open("tests/board_parsing/board-wrong_character.fail").unwrap();
-    assert_eq!(Board::try_from(file), Err(ParsingError::InvalidCharacter));
+    assert_eq!(Board::try_from(file), Err(ParsingError::InvalidCharacter('Z')));
 }
 
 #[test]

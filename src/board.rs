@@ -39,7 +39,7 @@ pub enum ParsingError {
     IOError,
     Generic,
     EmptyFile,
-    InvalidCharacter,
+    InvalidCharacter(char),
     PlayerParseError(char),
     BadSize,
     InconsistentSize,
@@ -388,7 +388,7 @@ impl TryFrom<File> for Board {
             match c {
                 '\n' => if first_row.is_empty() { } else { break },
                 'X' | 'O' | '_' => first_row.push(c.try_into().expect("Should be valid character")),
-                _ => return Err(Self::Error::InvalidCharacter),
+                _ => return Err(Self::Error::InvalidCharacter(c)),
             }
         }
         let size = first_row.len();
@@ -414,7 +414,7 @@ impl TryFrom<File> for Board {
                         row.push(c.try_into().expect("Should be valid character"))
                     } else { return Err(Self::Error::InconsistentSize) }
                 },
-                _ => return Err(Self::Error::InvalidCharacter),
+                _ => return Err(Self::Error::InvalidCharacter(c)),
             }
         }
 
@@ -565,7 +565,7 @@ mod tests {
         let mut file: File = tempfile::tempfile().unwrap();
         write!(file, "X\n_a__\n_OX_\n_XO_\n____\n").unwrap();
         file.seek(SeekFrom::Start(0)).unwrap();
-        assert_eq!(Board::try_from(file), Err(ParsingError::InvalidCharacter));
+        assert_eq!(Board::try_from(file), Err(ParsingError::InvalidCharacter('a')));
 
         let mut file: File = tempfile::tempfile().unwrap();
         write!(file, "X\n____\n_OX_\n_XO_\n____\n____").unwrap();
