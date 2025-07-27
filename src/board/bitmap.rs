@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use std::{
     io::stdout,
     ops::{BitAnd, BitOr},
@@ -158,11 +156,13 @@ impl Bitmap {
         self.union(other) == *other
     }
 
+    #[allow(dead_code)]
     pub fn superset_of(&self, other: &Self) -> bool {
         assert_eq!(self.size, other.size);
         self.intersection(other) == *other
     }
 
+    #[allow(dead_code)]
     pub fn print(&self) {
         let handle = stdout().lock();
         for y in 0..self.size {

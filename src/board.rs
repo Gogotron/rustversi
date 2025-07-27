@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 mod bitmap;
 use bitmap::Bitmap;
 
@@ -31,7 +29,7 @@ impl Player {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Move { x: u8, y: u8, }
 
 #[derive(Debug, PartialEq)]
@@ -121,15 +119,6 @@ impl Board {
         self.white.popcount().try_into().unwrap())
     }
 
-    fn compute_moves(&self) -> Bitmap {
-        let (player, opponent) = match self.player {
-            Some(Player::Black) => (&self.black, &self.white),
-            Some(Player::White) => (&self.white, &self.black),
-            None => return Bitmap::empty(self.size),
-        };
-        compute_moves(player, opponent)
-    }
-
     pub fn moves(&self) -> Vec<Move> {
         self.moves.clone().map(|(x, y)| Move { x, y }).collect()
     }
@@ -198,17 +187,6 @@ impl Board {
             moves,
             player: new_player,
         })
-    }
-
-    fn print(&self) {
-        let handle = stdout().lock();
-        for y in 0..self.size {
-            for x in 0..self.size {
-                print!("{}", char::from(self.get(x, y)));
-            }
-            println!();
-        }
-        drop(handle);
     }
 
     pub fn pretty_print(&self) {
@@ -522,7 +500,6 @@ mod tests {
 
     #[test]
     fn printing() {
-        Board::new(8).print();
         Board::new(8).pretty_print();
     }
 
@@ -534,9 +511,8 @@ mod tests {
 
     #[test]
     fn compute_moves() {
-        let moves = Board::new(8).compute_moves();
-        moves.print();
-        assert!(moves.get(3, 2) && moves.get(2, 3) && moves.get(5, 4) && moves.get(4, 5));
+        let moves = Board::new(8).moves();
+        assert_eq!(moves, vec![Move { x: 3, y: 2 }, Move { x: 2, y: 3 }, Move { x: 5, y: 4 }, Move { x: 4, y: 5 }]);
     }
 
     #[test]

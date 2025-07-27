@@ -20,10 +20,12 @@ impl BoundedOrd for i16 {
     const MAX: i16 = i16::MAX;
 }
 
+#[allow(dead_code)]
 pub fn minmax(board: &Board, timeout: Duration) -> Option<Move> {
     generic_minmax(board, timeout, heuristic)
 }
 
+#[allow(dead_code)]
 fn generic_minmax<T: Ord>(board: &Board, timeout: Duration, heuristic: Heuristic<T>) -> Option<Move> {
     let player = board.player?;
 
@@ -38,6 +40,7 @@ fn generic_minmax<T: Ord>(board: &Board, timeout: Duration, heuristic: Heuristic
     })
 }
 
+#[allow(dead_code)]
 fn helper<T: Ord>(board: &Board, player: &Player, depth: u8, end: Instant, heuristic: Heuristic<T>) -> T {
     if depth == 0 || board.player.is_none() || Instant::now() >= end {
         return heuristic(board, player);
