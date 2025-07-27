@@ -30,6 +30,7 @@ impl Tactic {
 
     fn human(board: &Board) -> Option<Move> {
         loop {
+            board.pretty_print();
             print!("Give your move (e.g. 'A5' or 'a5'), 'q' or 'Q' to quit: ");
             stdout().flush().unwrap();
             let mut input = String::new();
@@ -82,7 +83,6 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic, timeout: Duration) {
         String::from(Player::White),
         char::from(Player::White), String::from(white)
         );
-    board.pretty_print();
 
     while let Some(player) = board.player {
         let chosen_move = match player {
@@ -93,7 +93,6 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic, timeout: Duration) {
         let Some(m) = chosen_move else { break; };
 
         board = board.play(&m).expect("choose_move should return a valid move");
-        board.pretty_print();
     }
 
     match board.player {
@@ -117,6 +116,7 @@ fn game(mut board: Board, black: &Tactic, white: &Tactic, timeout: Duration) {
         }
     }
 
+    board.pretty_print();
     println!("Thanks for playing, see you soon!");
 }
 
