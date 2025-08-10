@@ -3,6 +3,7 @@ use std::{
     ops::{BitAnd, BitOr},
 };
 
+/// A structure representing a square grid of boolean cells.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bitmap {
     pub size: u8,
@@ -10,10 +11,12 @@ pub struct Bitmap {
 }
 
 impl Bitmap {
+    /// An alias for `empty`.
     pub fn new(size: u8) -> Self {
         Self::empty(size)
     }
 
+    /// Create an empty `Bitmap` of size at most 10.
     pub fn empty(size: u8) -> Self {
         if size > 10 {
             panic!("Bitmap too big")
@@ -21,6 +24,7 @@ impl Bitmap {
         Self { size, bm: 0 }
     }
 
+    /// Create a full `Bitmap` of size at most 10.
     pub fn full(size: u8) -> Self {
         if size > 10 {
             panic!("Bitmap too big")
@@ -34,6 +38,7 @@ impl Bitmap {
         }
     }
 
+    /// Negate the `Bitmap`.
     pub fn not(&self) -> Self {
         Self {
             size: self.size,
@@ -41,14 +46,17 @@ impl Bitmap {
         }
     }
 
+    /// Return whether the `Bitmap` is empty.
     pub fn is_empty(&self) -> bool {
         self.bm == 0
     }
 
+    /// Return whether the `Bitmap` is not empty.
     pub fn not_empty(&self) -> bool {
         self.bm != 0
     }
 
+    /// Set the given cell of the `Bitmap`.
     pub fn set(&self, x: u8, y: u8) -> Self {
         assert!(x < self.size && y < self.size);
         Self {
@@ -57,6 +65,7 @@ impl Bitmap {
         }
     }
 
+    /// Unset the given cell of the `Bitmap`.
     pub fn unset(&self, x: u8, y: u8) -> Self {
         assert!(x < self.size && y < self.size);
         Self {
@@ -65,15 +74,18 @@ impl Bitmap {
         }
     }
 
+    /// Get the value of the given cell of the `Bitmap`.
     pub fn get(&self, x: u8, y: u8) -> bool {
         assert!(x < self.size && y < self.size);
         Self::new(self.size).set(x, y).intersection(self).bm != 0
     }
 
+    /// Return the number of cells st in the `Bitmap`.
     pub fn popcount(&self) -> u32 {
         self.bm.count_ones()
     }
 
+    /// Shift the cells of the `Bitmap` north.
     pub fn shift_north(&self) -> Self {
         Self {
             size: self.size,
@@ -81,6 +93,7 @@ impl Bitmap {
         }
     }
 
+    /// Shift the cells of the `Bitmap` south.
     pub fn shift_south(&self) -> Self {
         Self {
             size: self.size,
@@ -88,6 +101,7 @@ impl Bitmap {
         }
     }
 
+    /// Shift the cells of the `Bitmap` east.
     pub fn shift_east(&self) -> Self {
         Self {
             size: self.size,
@@ -95,6 +109,7 @@ impl Bitmap {
         }
     }
 
+    /// Shift the cells of the `Bitmap` west.
     pub fn shift_west(&self) -> Self {
         Self {
             size: self.size,
@@ -102,6 +117,7 @@ impl Bitmap {
         }
     }
 
+    /// Shift the cells of the `Bitmap` north-east.
     pub fn shift_ne(&self) -> Self {
         Self {
             size: self.size,
@@ -109,6 +125,7 @@ impl Bitmap {
         }
     }
 
+    /// Shift the cells of the `Bitmap` south-east.
     pub fn shift_se(&self) -> Self {
         Self {
             size: self.size,
@@ -116,6 +133,7 @@ impl Bitmap {
         }
     }
 
+    /// Shift the cells of the `Bitmap` south-west.
     pub fn shift_sw(&self) -> Self {
         Self {
             size: self.size,
@@ -123,6 +141,7 @@ impl Bitmap {
         }
     }
 
+    /// Shift the cells of the `Bitmap` north-west.
     pub fn shift_nw(&self) -> Self {
         Self {
             size: self.size,
@@ -130,6 +149,7 @@ impl Bitmap {
         }
     }
 
+    /// Compute the interstion with another `Bitmap`.
     pub fn intersection(&self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         Self {
@@ -138,6 +158,7 @@ impl Bitmap {
         }
     }
 
+    /// Compute the union with another `Bitmap`.
     pub fn union(&self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         Self {
@@ -146,22 +167,26 @@ impl Bitmap {
         }
     }
 
+    /// Compute the set difference with another `Bitmap`.
     pub fn setminus(&self, other: &Self) -> Self {
         assert_eq!(self.size, other.size);
         self.intersection(&other.not())
     }
 
+    /// Return whether the `Bitmap` is a subset of another.
     pub fn subset_of(&self, other: &Self) -> bool {
         assert_eq!(self.size, other.size);
         self.union(other) == *other
     }
 
+    /// Return whether the `Bitmap` is a superset of another.
     #[allow(dead_code)]
     pub fn superset_of(&self, other: &Self) -> bool {
         assert_eq!(self.size, other.size);
         self.intersection(other) == *other
     }
 
+    /// Print a representation of the `Bitmap`, for debugging purposes.
     #[allow(dead_code)]
     pub fn print(&self) {
         let handle = stdout().lock();
@@ -174,6 +199,7 @@ impl Bitmap {
         drop(handle);
     }
 
+    /// Return the first cell that is set, if any are set.
     fn lowest(&self) -> Option<(u8, u8)> {
         if self.is_empty() {
             None
