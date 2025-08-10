@@ -21,6 +21,7 @@ pub enum Square {
 }
 
 impl Player {
+    /// Return the opposite player.
     pub fn other(&self) -> Self {
         match self {
             Self::Black => Self::White,
@@ -43,6 +44,11 @@ pub enum ParsingError {
     InconsistentSize,
 }
 
+/// A structure representing a board state.
+// It has a bitmap for the discs of each player and for the moves of the current player.
+// It keeps track of the current player, or if the game is over.
+// The `black`, `white`, and `moves` bitmaps are all of size `size.
+// `size` must be an even number between 2 and 10 inclusive.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Board {
     size: u8,
@@ -53,6 +59,9 @@ pub struct Board {
 }
 
 impl Board {
+    /// Create a `Board` with `Black` as the starting player and the 4 checkered discs at the
+    /// center of the board.
+    /// If the `size` is 2 the game is already over and this is replected in the `player`.
     pub fn new(size: u8) -> Self {
         assert!(size % 2 == 0 && (2..=10).contains(&size));
 
@@ -73,6 +82,7 @@ impl Board {
         }
     }
 
+    /// Return the state of the square at the given coordinates.
     fn get(&self, x: u8, y: u8) -> Square {
         assert!(x < self.size && y < self.size);
         if self.black.get(x, y) {
@@ -82,6 +92,7 @@ impl Board {
         } else { Square::Empty }
     }
 
+    /// Set the state of the square at the given coordinates.
     pub fn set(&self, x: u8, y: u8, squ: Square) -> Self {
         assert!(x < self.size && y < self.size);
         let (black, white) = match squ {
@@ -114,20 +125,24 @@ impl Board {
         }
     }
 
+    /// Return the score of the game.
     pub fn score(&self) -> (u8, u8) {
         (self.black.popcount().try_into().unwrap(),
         self.white.popcount().try_into().unwrap())
     }
 
+    /// Return a vector of possible `Move`s for the current player.
     pub fn moves(&self) -> Vec<Move> {
         self.moves.clone().map(|(x, y)| Move { x, y }).collect()
     }
 
+    /// Return whether a given `Move` is valid for the current player.
     pub fn is_valid_move(&self, m: &Move) -> bool {
         m.x < self.size && m.y < self.size
             && self.moves.get(m.x, m.y)
     }
 
+    /// Place a disc on the board.
     pub fn play(&self, m: &Move) -> Option<Self> {
         let (x, y) = (m.x, m.y);
         if !self.moves.get(x, y) {
@@ -189,6 +204,7 @@ impl Board {
         })
     }
 
+    /// Print a fancy representation of the state of the board.
     pub fn pretty_print(&self) {
         let handle = stdout().lock();
         if let Some(player) = self.player {
@@ -442,6 +458,7 @@ impl TryFrom<File> for Board {
 }
 
 impl From<&Board> for String {
+    // Create the string representation of a board state, for later writing it to a file.
     fn from(b: &Board) -> Self {
         let mut out = String::new();
         out.push(Square::from(b.player).into());
@@ -456,6 +473,9 @@ impl From<&Board> for String {
     }
 }
 
+// Like calling `next` on an iterator, except it skips whitespace and comments.
+// In the case of comments, it returns the newline character that ends the comment, if it is found
+// before the EOF.
 fn next_ignore_chars<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
     match iter.find(|c| !c.is_ascii_whitespace() || *c =='\n') {
         Some('#') => iter.find(|c| *c == '\n'),
@@ -463,6 +483,7 @@ fn next_ignore_chars<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
     }
 }
 
+// Builds upon `next_ignore_chars` by also ignoring the newlines at the end of comments.
 fn next_ignore_chars_and_newlines<T: Iterator<Item = char>>(iter: &mut T) -> Option<char> {
     loop {
         match next_ignore_chars(iter) {
@@ -472,6 +493,7 @@ fn next_ignore_chars_and_newlines<T: Iterator<Item = char>>(iter: &mut T) -> Opt
     }
 }
 
+// Return a `Bitmap` of the possible moves given the `Bitmaps` of the two players.
 fn compute_moves(player: &Bitmap, opponent: &Bitmap) -> Bitmap {
     assert_eq!(player.size, opponent.size);
 
